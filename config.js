@@ -27,7 +27,12 @@ window.APP_CONFIG = {
   coachesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=11015794&single=true&output=csv",
 
   /* Produced by setup.html — do not hand-edit. */
-  financials: null,
+  financials: {
+    salt: "e0hzx56TC+pbdY3T9LXQXQ==",
+    iv: "ZCBeRfNgopzRc6XY",
+    ciphertext: "G469yQIL7MxxpveyqnsCpSJWaeIwJ47Y/b0hrBay6n+Cm8aDowBJaChGWVpIIpZ5oNXAdFZiAw/5wyaM54NBAqq8FRf571ZhCtyCyZ8A/kcrHtS9yQTHvSLF9VRxp44YoOH6w6hxJoNfQ8lnDrkMqd+tfdmzVmgPjjIqait5YVGi7b4jZNBhGnZz3x2dwNuLCN5DJw3P5YBJ3eIg8EAu7/MGtiZzVcGWVs6i+P4mpVDW1r/Ww/qeaJk=",
+    iterations: 250000
+  },
 
   /* Coaches who appear under more than one name.
      Written as  "name as it appears": "the real coach".
