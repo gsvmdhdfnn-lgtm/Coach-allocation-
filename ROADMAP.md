@@ -129,6 +129,38 @@ infrastructure). Both run the identical report logic against Sessions +
 Terms + Changes + Calendar; building one does not cost building the other
 later, since only the trigger differs.
 
+**Financial forecast / date-range P&L — new, well-specified, David's idea.**
+Sits ON TOP of the term-accuracy fix above, not alongside it - only makes
+sense once a session's real weeks-running is correct, so build it after,
+not in parallel.
+
+Three things David asked for turned out to be one feature:
+- "A yearly forecast - based on the dates they run, how much does this
+  bring in"
+- "A breakdown of a date range"
+- Confirmed understanding: a live weekly/monthly figure correctly drops to
+  £0 for a week a school is not on - that is accuracy, not data loss. A
+  month/term/year figure is a SUM of weeks, and a week that already
+  happened stays counted in that sum forever; nothing is ever subtracted
+  after the fact. Different question ("this week" vs "this year"),
+  different answer - worth keeping distinct, it is an easy thing to
+  conflate and alarm someone over nothing.
+
+These are the same calculation with different start/end dates fed in -
+build one range-based engine, not three separate features. "This week",
+"this month", "this term", "this year" and a custom range are all presets
+of it.
+
+The useful shape for the year is not one blended number: **actual so far +
+scheduled remainder = total**. "£38,400 banked, £61,200 still to come,
+£99,600 for the year" tells you where you stand AND where you are headed,
+which a single total hides.
+
+Proposed home: a new page inside the existing password-gated Financials
+section, alongside the by-coach view, reusing data the app already loads
+for the schedule (Sessions, Financials, Terms, Calendar) - nothing new to
+fetch.
+
 **The report must WRITE somewhere durable, not just display a number.**
 David wants years of history to look back on, and the live week picker is
 the wrong tool for that: it reconstructs a week from whatever rows still
