@@ -34,9 +34,9 @@ anything already shared with a coach keeps working.
 Both are optional and both are hidden until their tab is published, so
 nobody ever sees an empty page.
 
-1. Run **Add hub tabs.gs** in the spreadsheet. It creates an `Info` tab with
-   starter rows to edit, and a `Venue info` tab pre-filled with every venue
-   already on the schedule.
+1. Run **Add hub tabs.gs** in the spreadsheet. It creates an `Info` tab and a
+   `Resources` tab with starter rows to edit, and a `Venue info` tab
+   pre-filled with every venue already on the schedule.
 2. **File → Share → Publish to web**, publish each tab as CSV.
 3. Paste the links into `../config.js` as `infoCsvUrl`, `venueInfoCsvUrl`
    and `resourcesCsvUrl`.

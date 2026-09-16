@@ -65,13 +65,19 @@ and two later features depend on it.
 The principle we settled on: **log the exceptions, not everything.** There is
 a base schedule and it is mostly right.
 
-## Ideas worth coming back to
+**Agreed outcome of this work: the week's theme on the session.** The term
+posters already carry the dates — week 9 is w/c 9th November, and so on. Put
+those weeks in the calendar tab and the hub can say what this week is about:
 
-- **"This week's theme" on the home page.** The term posters carry dates —
-  week 9 is w/c 9th November, and so on. Once the calendar tab exists, the
-  hub could open with "Week 9 — Start Attacks" rather than a generic
-  welcome. That is the kind of thing that makes people open it on a Tuesday
-  night, and it costs nothing extra once the dates are in the sheet.
+- On the home page — "Week 9 — Start Attacks" instead of a generic welcome
+- On each session card in the schedule — so a coach checking where they are
+  on Tuesday night also sees what they are coaching
+
+It needs a `Themes` column or tab keyed by week number, which is a handful
+of rows a term. The theme is a property of the week, not of the session, so
+it costs nothing per session and nothing to maintain once a term is typed in.
+
+David: "I like that calendar link with the session."
 
 ## After that, in order
 
