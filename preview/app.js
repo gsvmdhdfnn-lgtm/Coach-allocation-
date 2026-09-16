@@ -1620,7 +1620,7 @@
     { view: "schedule", title: "Schedule",
       blurb: "Find any coach and see every session they run this week." },
     { view: "venues", title: "Venues",
-      blurb: "Where each session runs, how to get there and what to expect on arrival." },
+      blurb: "Addresses, directions and what to expect when you get there." },
     { view: "handbook", title: "Handbook",
       blurb: "Kit, absence, who to call — the things worth knowing.",
       needs: function () { return hasTab(CFG.infoCsvUrl); } },
@@ -1744,19 +1744,8 @@
       if (facts.children.length) card.appendChild(facts);
     }
 
-    var list = mk("div", "vcard-sessions");
-    g.sessions.slice().sort(function (a, b) {
-      var d = DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day);
-      return d !== 0 ? d : (a.startMin || 0) - (b.startMin || 0);
-    }).forEach(function (s) {
-      var row = mk("div", "vrow");
-      row.appendChild(mk("span", "vrow-day", s.day || ""));
-      row.appendChild(mk("span", "vrow-time", s.time || ""));
-      row.appendChild(mk("span", "vrow-name", s.name || ""));
-      row.appendChild(mk("span", "vrow-coaches", s.coaches.join(", ")));
-      list.appendChild(row);
-    });
-    card.appendChild(list);
+    /* What runs here belongs to the Schedule section - repeating it makes
+       this a second timetable to keep straight rather than a place list. */
     return card;
   }
 

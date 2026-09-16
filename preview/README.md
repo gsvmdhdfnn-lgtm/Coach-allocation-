@@ -17,7 +17,7 @@ The live site opens straight into a coach dropdown. This one opens on a
 | --- | --- |
 | Home | Counts from the Sessions tab |
 | Schedule | Sessions + Coaches tabs — unchanged from the live site |
-| Venues | Sessions tab, plus the optional **Venue info** tab |
+| Venues | The venue names on the Sessions tab, plus the optional **Venue info** tab |
 | Handbook | The optional **Info** tab |
 | Financials | The Financials tab, behind the password — unchanged |
 
