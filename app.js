@@ -177,7 +177,9 @@
   /** Minutes past midnight for the start of a range like "6:00-7:30pm". */
   function startMinutes(time) {
     var m = String(time).match(
-      /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*[-–—]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+      // Accepts 6:00-7:30pm, 6.00-7.30pm, 9am-3pm, "9am to 3pm", 09:00-15:00
+      // and en/em dashes - people write times in the sheet however they like.
+      /(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?(?:\s*[-–—]\s*|\s+to\s+)(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i);
     if (!m) return null;
 
     var sh = +m[1], sm = +(m[2] || 0), smer = m[3] && m[3].toLowerCase();
