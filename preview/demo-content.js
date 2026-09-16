@@ -54,15 +54,16 @@
   }
 
   if (!cfg.termsCsvUrl) {
-    /* The exact scenario David described: two schools, same term, different
-       start dates. St Peter's runs from this week; Daneshill (his Dane's
-       Hill) does not start until next week, so Tom's Wednesday session
-       there simply does not appear this week - and reappears on its own
-       once the date is reached, no row to remember to remove. */
+    /* David's scenario in full: St Peter's runs straight through. Daneshill
+       (his Dane's Hill) starts a week later, AND takes a break for half
+       term two weeks after that - two Terms rows for the same school, not
+       one with a hole punched in it. Nothing here says "cancelled": a half
+       term was never a scheduled session in the first place. */
     cfg.termsCsvUrl = asCsv(
       "school,starts,ends,note\n" +
       "St Peters," + monday(0) + "," + monday(20) + ",\n" +
-      "Daneshill," + monday(1) + "," + monday(20) + ",Starts a week later this term\n");
+      "Daneshill," + monday(1) + "," + monday(1) + ",\n" +
+      "Daneshill," + monday(3) + "," + monday(20) + ",Back after half term\n");
     used = true;
   }
 
@@ -73,8 +74,9 @@
       monday(0) + ",E14,,,,cancelled,,,,School hall booked for a concert\n" +
       /* a coach away for a whole week - one row, every session of theirs */
       monday(1) + ",,,Tom,Sam,cover,,,,Tom on holiday\n" +
-      /* a school's half term - one row, every session there */
-      monday(2) + ",,Daneshill,,,cancelled,,,,Their half term\n" +
+      /* a genuine one-off, unlike half term: nobody knew this in advance,
+         so it stays a Changes row rather than a second Terms span */
+      monday(2) + ",,City of London Freemen's School,,,cancelled,,,,Building works\n" +
       /* something the school asked for as a one-off */
       monday(3) + ",,Daneshill,,Tom,extra,Tuesday,1:00-2:00pm,Year 5 taster," +
         "School asked for a one-off\n");

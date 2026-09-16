@@ -35,12 +35,12 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Week picker on "My week" — this week plus three, with the week's theme,
   and cancellations, cover and one-offs applied from a `Changes` tab.
   3 weeks ahead and cancellations stay visible, both David's call.
-- `Terms` tab — a school whose term genuinely runs a different span of
-  weeks (not a one-off, the plan every year). A session outside its
-  school's term does not show as a card; one quiet line says why, not a
-  banner. Separate from `Changes` on purpose: typing a cancelled row for
-  Dane's Hill every week until its term starts is exactly the "nobody
-  keeps that up" trap the Changes tab was built to avoid.
+- `Terms` tab — a school's own calendar: a different start date, and a
+  half term, represented as two spans for the same school rather than a
+  cancelled row. Revised after David pointed out that "Cancelled" is the
+  wrong word for a week that was never scheduled in the first place — a
+  school on a break gets the same quiet treatment as one that hasn't
+  started, never a red banner.
 - Status banners across the top of a card — red *Cancelled*, amber *Sam is
   covering · You are not needed*, lime *Covering for Tom*, blue *One-off*.
   Signed off: "they all look great". The headline carries the fact, not the
@@ -99,21 +99,27 @@ already looks up venue/day/time via `INDEX/MATCH`, counts how many
 flat `weeksPerMonth` constant. The hours report does the identical lookup
 before counting an hour worked.
 
-**How to represent a gap inside a term (e.g. half term):** `Terms` is a
-boundary (start, end) — nothing more. A closure inside an otherwise-running
-term, like Dane's Hill's half term, is NOT a second date range on `Terms`.
-It is the same kind of fact as a coach's holiday or a one-off cover, so it
-goes on `Changes`: one `venue: X, type: cancelled` row per closed week (a
-two-week half term is two rows). Deliberately not given its own mechanism —
-`Changes` already exists and is tested, and a term with a built-in
-exclusion range would be a second way to say "not running", which is the
-thing worth avoiding (two places that could disagree about the same fact).
-David's own example, to keep as the reference case:
-  `Terms`: Daneshill, starts 2026-09-12, ends 2026-12-12
-  `Changes`: Daneshill cancelled, week_commencing 2026-10-19
-  `Changes`: Daneshill cancelled, week_commencing 2026-10-26
-Three rows, not one clever cell. The financials and the hours report read
-all three the same way the schedule already does.
+**How to represent a gap inside a term (e.g. half term) — CORRECTED.**
+The first version of this decision (above, superseded) said half term
+should be a `Changes` "cancelled" row. David caught the problem with that:
+"Cancelled" means something was due to happen and didn't; half term was
+never scheduled, so calling it cancelled tells a coach something went
+wrong when nothing did.
+
+The fix: `Terms` allows **more than one row per school**. Half term is not
+a hole punched in a single date range, it is two ordinary spans — one up
+to the break, one starting again after it. No new column, no new
+mechanism, just "a school can appear more than once":
+  `Terms`: Daneshill, starts 2026-09-12, ends 2026-10-16
+  `Terms`: Daneshill, starts 2026-11-02, ends 2026-12-12, note "Back after half term"
+A week that falls in neither span gets the same quiet treatment as a term
+that hasn't started yet — no card, one grey line under the coach's summary,
+never a red "Cancelled" banner. `Changes` still exists and is still right
+for what it was always for: something genuinely unpredictable (a coach's
+day off, a school's one-off ask) — not a school's own known calendar.
+Built and tested in the preview; the reasoning above about a third
+mechanism causing two places to disagree still holds, it was just aimed at
+the wrong fix.
 
 **The coach hours report — confirmed buildable both ways David asked for:**
 on demand (a button/menu item in the spreadsheet, same pattern as every

@@ -390,20 +390,68 @@
     });
   }
 
-  function termFor(s) {
-    if (!state.terms || !state.terms.length) return null;
+  /**
+   * A school can have more than one Terms row. That is not duplication -
+   * it is how a mid-term break is expressed: one span up to half term, a
+   * second span after it. Half term is not a cancellation - it was never
+   * scheduled in the first place, so "Cancelled" would tell a coach
+   * something went wrong when nothing did. It gets the same quiet, no-card
+   * treatment as a term that has not started yet, because to a coach it is
+   * the identical fact: this school, this week, nothing to do.
+   */
+  function schoolTerms(s) {
+    if (!state.terms || !state.terms.length) return [];
     var key = nameKey(s.client || s.venue || "");
-    return state.terms.filter(function (t) { return t.key === key; })[0] || null;
+    return state.terms.filter(function (t) { return t.key === key; });
   }
 
-  /** Does this school's term cover the Monday of this week? No dates on the
-      row at all means "always" - a start with no end means "still going". */
-  function inTerm(term, mondayIso) {
-    if (!term) return true;
+  /** Does this one span cover the Monday of this week? A start with no end
+      means "still going"; both blank would mean "always" (schoolTerms
+      never returns a school with nothing set, so this is just the guard). */
+  function inSpan(span, mondayIso) {
     var d = parseDay(mondayIso);
-    if (term.starts && d < mondayOf(term.starts)) return false;
-    if (term.ends && d > mondayOf(term.ends)) return false;
+    if (span.starts && d < mondayOf(span.starts)) return false;
+    if (span.ends && d > mondayOf(span.ends)) return false;
     return true;
+  }
+
+  /** In term if ANY of the school's spans cover this week. No rows at all
+      means no restriction - runs whenever the base schedule says. */
+  function inAnyTerm(spans, mondayIso) {
+    if (!spans.length) return true;
+    return spans.some(function (t) { return inSpan(t, mondayIso); });
+  }
+
+  /**
+   * Why a school is not on this week - distinguishing "hasn't started",
+   * "finished for the year" and "on a break between two spans" (half term),
+   * because they read differently even though none of them is a
+   * cancellation. Prefers whatever the sheet actually wrote in `note`.
+   */
+  function termMessage(spans, mondayIso) {
+    var d = parseDay(mondayIso);
+    var sorted = spans.slice().sort(function (a, b) {
+      var at = a.starts ? a.starts.getTime() : -Infinity;
+      var bt = b.starts ? b.starts.getTime() : -Infinity;
+      return at - bt;
+    });
+    var first = sorted[0], last = sorted[sorted.length - 1];
+
+    if (first.starts && d < mondayOf(first.starts)) {
+      return (first.note ? first.note + " — " : "") + "starts " + shortDate(first.starts);
+    }
+    if (last.ends && d > mondayOf(last.ends)) {
+      return (last.note ? last.note + " — " : "") + "ended " + shortDate(last.ends);
+    }
+    /* Neither before the first span nor after the last - so this is a gap
+       between two of the school's own spans, e.g. half term. */
+    var next = sorted.filter(function (t) {
+      return t.starts && mondayOf(t.starts) > d;
+    })[0];
+    if (next) {
+      return (next.note ? next.note + " — " : "") + "back " + shortDate(next.starts);
+    }
+    return "not on this week";
   }
 
   function loadWeekData() {
@@ -518,9 +566,9 @@
     state.sessions.forEach(function (s) {
       var onBase = s.coaches.some(function (c) { return nameKey(c) === nameKey(coach.name); });
 
-      var term = termFor(s);
-      if (term && !inTerm(term, iso)) {
-        if (onBase) outOfTerm.push({ session: s, term: term });
+      var spans = schoolTerms(s);
+      if (spans.length && !inAnyTerm(spans, iso)) {
+        if (onBase) outOfTerm.push({ session: s, message: termMessage(spans, iso) });
         return;   // not part of the plan this week - nothing to cancel or cover
       }
 
@@ -912,11 +960,8 @@
       outOfTerm.forEach(function (o, i) {
         if (i) termNote.appendChild(document.createTextNode(" · "));
         var label = o.session.name || o.session.venue;
-        var when = o.term.starts && mondayOf(new Date()) < mondayOf(o.term.starts)
-          ? "starts " + shortDate(o.term.starts)
-          : o.term.ends ? "ended " + shortDate(o.term.ends) : "not on this week";
         termNote.appendChild(document.createTextNode(
-          "Not running this week: " + label + " — " + when));
+          "Not running this week: " + label + " — " + o.message));
       });
       el.summary.appendChild(termNote);
     }

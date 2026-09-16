@@ -119,49 +119,58 @@ the plain base week exactly as before.
 
 ## Two schools, two calendars — the Terms tab
 
-`Changes` is for a one-off deviation from a school that is normally on.
-It is the wrong tool for a school whose term simply runs a different span of
-weeks every year — St Peter's back on the 8th, Dane's Hill not until the
-15th. Logging that through Changes would mean a fresh *cancelled* row for
-Dane's Hill every single week until its term starts: exactly the "nobody
-will keep that up" trap Changes exists to avoid, because a change that isn't
-logged is a schedule that's confidently wrong.
+`Changes` is for something unpredictable: a coach's day off, a school
+asking for a one-off, a hall being double-booked one week only. It is the
+wrong tool for anything that is simply how a school's own calendar works,
+known well in advance — a term starting on a different date to everyone
+else's, or a half term. Both of those are calendar structure, not an
+exception, and a coach should never see "Cancelled" for a week that was
+never going to happen in the first place — that word means something was
+due and didn't happen, and half term was never due.
 
-**`Terms`** is a smaller, separate idea: one row per school, a date range.
+**`Terms`** holds both: one row per span, and **a school can have more than
+one row**.
 
 | school | starts | ends | note |
 | --- | --- | --- | --- |
-| Dane's Hill | 2026-09-22 | | Starts a week later this term |
+| Dane's Hill | 2026-09-22 | 2026-10-16 | |
+| Dane's Hill | 2026-11-02 | | Back after half term |
 
-`school` matches a session's `client` column, or its `venue` when `client`
-is blank — the normal case for a day school, where the venue and the school
-are the same thing. A blank `ends` means the term is still going. **A school
-with no row is not restricted at all** — it runs whenever the base schedule
-already says, exactly as today. Most schools will never need a row.
+That is not two facts about Dane's Hill fighting each other — it is one
+school with a gap in the middle. A half term is represented exactly the
+same way a late start is: as the *absence* of a span, not as a special
+column or a second mechanism. `school` matches a session's `client` column,
+or its `venue` when `client` is blank — the normal case for a day school,
+where the venue and the school are the same thing. A blank `ends` means
+that span is still going. **A school with no row at all is not restricted**
+— it runs whenever the base schedule already says, exactly as today. Most
+schools will only ever need one row, if any.
 
 ### What a coach sees
 
-A session outside its school's term does not appear as a card — there is
-nothing to cancel, because it was never part of that week's plan. Instead,
-one quiet line appears under the coach's summary:
+A session outside every one of its school's spans does not appear as a
+card — there is nothing to cancel, because it was never part of that
+week's plan. Instead, one quiet line appears under the coach's summary,
+worded from whatever the `note` column says:
 
-> Not running this week: Daneshill — starts 21 Sep
+> Not running this week: Daneshill — Back after half term — back 5 Oct
 
 Deliberately **not** a banner. Cancelled and covered are alarms — something
 that would normally happen isn't, and the coach needs to know why. A school
-not yet in term is not an alarm; it is simply not part of the plan yet, the
-same as any other week without a Tuesday session. Once the date passes, the
-session reappears on its own — no row to remember to remove.
+on a break, or not yet started, is not an alarm; it is simply not part of
+the plan yet, the same as any other week without a Tuesday session. Once
+the date passes, the session reappears on its own — no row to remember to
+remove.
 
 ### Where this is going
 
 The financial figures currently assume every session runs 4.3333 weeks a
 month, every month. Once `Terms` exists, that stops being a flat assumption
 and becomes actual weeks — a school that runs 34 weeks a year gets costed
-as 34 weeks, not 52. The coach hours report reads the same tab: hours for a
-week a school's term did not cover are not counted, because the session
-never happened. Neither is built yet; `Terms` is the piece both will read
-once they are.
+as 34 weeks, not 52, with its half term correctly not counted either. The
+coach hours report reads the same tab: hours for a week a school's term did
+not cover are not counted, because the session never happened. Neither is
+built yet; `Terms` is the piece both will read once they are.
 
 ## "Their own space" — coach codes
 
