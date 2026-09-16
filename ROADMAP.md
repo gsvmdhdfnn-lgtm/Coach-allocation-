@@ -37,6 +37,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
    (without them, Directions is a name search and is weak for the
    single-word venues like Milbourne and Parkside)
 5. **Decide whether to promote the preview** over the live site
+6. **Add an `Ideas` tab** and show it in the hub behind the Financials
+   password — agreed. Same pattern as the Handbook, just gated, so David can
+   add a row from his phone in the Sheets app and both he and Josh see the
+   list. Replaces this file as the place ideas get captured; this file stays
+   as the record of what is decided and built.
 
 ## Next — the parked build
 
