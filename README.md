@@ -129,21 +129,21 @@ Commit and push, and the site picks it all up.
 ## 4. Put it on GitHub Pages
 
 In the repository: **Settings → Pages → Build and deployment**, source
-**Deploy from a branch**, branch `main`, folder `/ (root)`, **Save**. A minute
-later the site is at:
+**Deploy from a branch**, branch `claude/coach-schedule-web-app-lu94l7` (the
+repository's default branch), folder `/ (root)`, **Save**. A minute later the
+site is at:
 
 ```
 https://gsvmdhdfnn-lgtm.github.io/Coach-allocation-/
 ```
 
-Two things worth knowing:
+The repository is public, so Pages works on a free plan. Nothing financial
+lives in it — only the code that goes and fetches the figures — so public is
+safe here.
 
-- **This repository is currently private.** Pages from a private repository
-  needs a paid GitHub plan. Making the repository public is the usual fix, and
-  is safe here — no figures live in this repository, only the code that goes and
-  fetches them.
-- The site is a set of static files. There is no server, so anything the page
-  can read, a visitor can read too. That shapes the section below.
+One consequence to keep in mind: the site is a set of static files with no
+server behind it, so anything the page can read, a visitor can read too. That
+shapes the section below.
 
 ---
 
