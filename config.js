@@ -72,6 +72,25 @@ window.APP_CONFIG = {
      schedule says. Optional: without it nothing changes. */
   termsCsvUrl: "",
 
+  /* Published CSV URL for the "Overheads" tab — company-wide costs that do
+     not belong to any one session: admin, insurance, payment processing
+     fees. Columns: item, category, amount, repeats, starts, ends, note.
+     `repeats` blank means a one-off, counted once on `starts`; set to
+     weekly/monthly/quarterly/annually for a regular cost running from
+     `starts` until `ends` (blank ends = still going).
+
+     PREVIEW-ONLY CAVEAT, read before using this for real figures: unlike
+     `financials` below, this URL is NOT encrypted — it just happens to
+     only be fetched once the Financials password has already been
+     accepted. That is the app's *behaviour*, not real protection: the URL
+     itself would still sit in this file in the clear. Real overhead
+     figures (insurance premiums, admin costs) are exactly the kind of
+     thing the password exists to hide, so before this goes into
+     production it wants the same AES-GCM treatment `financials` already
+     has, not this shortcut. Optional: leave empty and the feature is
+     simply absent. */
+  overheadsCsvUrl: "",
+
   /* Produced by setup.html — do not hand-edit. */
   financials: {
     salt: "yv6jJJ/oYpXFI6bYLLGgkg==",

@@ -1097,3 +1097,20 @@ a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   font-size: .87rem;
   color: var(--ink-faint);
 }
+
+/* ------------------------------ overheads ------------------------------ */
+
+.hcard-caption {
+  margin-top: -6px;
+  color: var(--ink-faint);
+  font-size: .78rem;
+  font-style: italic;
+}
+.hcard-oneoff {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: .82rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}

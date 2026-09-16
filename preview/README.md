@@ -172,6 +172,56 @@ coach hours report reads the same tab: hours for a week a school's term did
 not cover are not counted, because the session never happened. Neither is
 built yet; `Terms` is the piece both will read once they are.
 
+## Overheads — costs that aren't a session's
+
+Coach cost and venue cost belong to a session. Insurance, admin, payment
+processing fees don't — they're facts about the business, not about
+Tuesday at Freemen's. So they get their own tab rather than another column
+bolted onto Sessions or Financials.
+
+**`Overheads`** — one row shape covers both one-off and regular costs,
+reusing the same "blank end = still going" rule already used on `Terms`:
+
+| item | category | amount | repeats | starts | ends | note |
+| --- | --- | --- | --- | --- | --- | --- |
+| Public liability insurance | Insurance | 840 | annually | 2026-01-01 | | |
+| Accounting software | Admin | 29 | monthly | 2026-01-01 | | |
+| New laptop | Admin | 650 | | 2026-03-14 | | One-off |
+
+`repeats` blank = a one-off, counted once on `starts`. Set to
+weekly/monthly/quarterly/annually = a regular cost, converted to both
+weekly and monthly figures the same way session revenue already is.
+
+**Where it shows:** only on the **Combined** card in the Financials
+summary, never on Evening or Day individually — overheads are a
+whole-business fact, not a programme one. The card gains a "Session
+profit" and "Overheads" line, and its headline figure becomes **net profit
+after overheads**, captioned as such so it's never mistaken for the same
+number as before.
+
+**One-offs are shown, not blended in.** A one-off due this month appears
+as its own line — "Plus one-off this month: New laptop (£650) — not
+included in the figure above" — rather than silently folded into a
+monthly average, which would turn a real event into a made-up number. Same
+reasoning as keeping a snapshot distinct from a total everywhere else in
+this app.
+
+**Not yet decided, flagged for later:** payment processing fees aren't
+really a fixed amount like insurance — they're a percentage of whatever
+revenue came in, so they move rather than sit still. For now, enter a
+rough average monthly figure. Modelling it properly as a true percentage
+of revenue is a refinement for whenever the financial forecast work
+happens, not something to guess at today.
+
+**Security note, read before using real figures.** Unlike the Financials
+URL itself, `overheadsCsvUrl` is **not** encrypted — it only happens to be
+fetched after the Financials password succeeds, which is the app's
+behaviour, not real protection. The URL would still sit in `config.js` in
+the clear. Real overhead figures are exactly the kind of thing the
+password exists to hide, so this wants the same AES-GCM treatment
+`financials` already has before it carries real numbers — see the comment
+above `overheadsCsvUrl` in `config.js`.
+
 ## "Their own space" — coach codes
 
 Each coach gets a six-character code. Their link is the site address plus

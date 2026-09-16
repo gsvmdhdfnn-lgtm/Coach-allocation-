@@ -21,6 +21,7 @@
     rates: {},           // canonical name -> row from the Coaches tab
     aliases: {},         // lowercased alias -> canonical name
     financials: null,    // session_id -> row, once unlocked
+    overheads: null,     // rows from the Overheads tab, once unlocked
     selected: null,
     view: "home",
     calendar: null,      // "YYYY-MM-DD" (a Monday) -> { weekNo, label, theme, running }
@@ -1392,7 +1393,63 @@
         var map = {};
         objs.forEach(function (r) { if (r.session_id) map[r.session_id] = r; });
         state.financials = map;   // memory only — gone on reload, never stored
+        return loadOverheads();
       });
+  }
+
+  /** Company-wide costs, not tied to any session. Optional, and only ever
+      fetched once the password above has already succeeded. */
+  function loadOverheads() {
+    if (!hasTab(CFG.overheadsCsvUrl)) { state.overheads = []; return; }
+    return fetchCsv(CFG.overheadsCsvUrl, "Overheads").then(function (rows) {
+      state.overheads = toObjects(rows, ["item"], "Overheads").map(function (r) {
+        return {
+          item: String(r.item || "").trim(),
+          category: String(r.category || "").trim(),
+          amount: num(r.amount) || 0,
+          repeats: String(r.repeats || "").trim().toLowerCase(),
+          starts: parseDay(r.starts),
+          ends: parseDay(r.ends),
+          note: String(r.note || "").trim()
+        };
+      }).filter(function (r) { return r.item; });
+    }).catch(function (e) {
+      console.warn("Overheads could not be loaded:", e);
+      state.overheads = [];
+    });
+  }
+
+  /**
+   * Recurring costs converted to both bases, same shape as agg(). One-offs
+   * are kept separate rather than blended in - folding "a laptop, once"
+   * into a weekly average would be a made-up number, not a fact, the same
+   * reasoning as keeping a snapshot distinct from a total everywhere else
+   * in this app.
+   */
+  function overheadTotals() {
+    var out = { weekly: 0, monthly: 0, oneOffWeek: [], oneOffMonth: [] };
+    if (!state.overheads || !state.overheads.length) return out;
+
+    var thisMonday = mondayOf(new Date());
+    var now = new Date();
+
+    state.overheads.forEach(function (r) {
+      if (!r.repeats) {
+        if (!r.starts) return;
+        if (isoDay(mondayOf(r.starts)) === isoDay(thisMonday)) out.oneOffWeek.push(r);
+        if (r.starts.getFullYear() === now.getFullYear() &&
+            r.starts.getMonth() === now.getMonth()) out.oneOffMonth.push(r);
+        return;
+      }
+      var toWeekly = { weekly: 1, monthly: 1 / WEEKS, quarterly: 1 / 13,
+                       annually: 1 / 52 }[r.repeats];
+      var toMonthly = { weekly: WEEKS, monthly: 1, quarterly: 1 / 3,
+                        annually: 1 / 12 }[r.repeats];
+      if (toWeekly == null) return;   // an unrecognised word in `repeats` - skip, don't guess
+      out.weekly += r.amount * toWeekly;
+      out.monthly += r.amount * toMonthly;
+    });
+    return out;
   }
 
   el.pwForm.addEventListener("submit", function (e) {
@@ -1776,34 +1833,63 @@
     return d;
   }
 
-  function headCard(title, a, isTotal) {
+  function headCard(title, a, isTotal, overheads) {
     var c = document.createElement("div");
     c.className = "hcard" + (isTotal ? " is-total" : "");
     var h = document.createElement("h3"); h.textContent = title; c.appendChild(h);
 
     var other = fv.basis === "monthly" ? "weekly" : "monthly";
+    var sessionProfit = a[fv.basis].profit;
+
     var big = document.createElement("div");
-    big.className = "big " + (a[fv.basis].profit >= 0 ? "pos" : "neg");
-    big.textContent = cash(a[fv.basis].profit);
+    var headline = overheads ? sessionProfit - overheads[fv.basis] : sessionProfit;
+    big.className = "big " + (headline >= 0 ? "pos" : "neg");
+    big.textContent = cash(headline);
     c.appendChild(big);
 
     var alt = document.createElement("div");
     alt.className = "alt";
+    var otherHeadline = overheads
+      ? a[other].profit - overheads[other] : a[other].profit;
     alt.textContent = (fv.basis === "monthly" ? "per month" : "per week") +
-      " · " + cash(a[other].profit) +
+      " · " + cash(otherHeadline) +
       (other === "monthly" ? " per month" : " per week");
     c.appendChild(alt);
+    if (overheads) {
+      var caption = document.createElement("div");
+      caption.className = "alt hcard-caption";
+      caption.textContent = "net profit after overheads";
+      c.appendChild(caption);
+    }
 
     var rows = document.createElement("div");
     rows.className = "rows";
-    [["Revenue (net)", a[fv.basis].net], ["Coach cost", a[fv.basis].coach],
-     ["Venue cost", a[fv.basis].venue]].forEach(function (r) {
+    var lines = [["Revenue (net)", a[fv.basis].net], ["Coach cost", a[fv.basis].coach],
+                 ["Venue cost", a[fv.basis].venue]];
+    if (overheads) {
+      lines.push(["Session profit", sessionProfit]);
+      lines.push(["Overheads", -overheads[fv.basis]]);
+    }
+    lines.forEach(function (r) {
       var d = document.createElement("div");
       var k = document.createElement("span"); k.textContent = r[0];
       var v = document.createElement("span"); v.textContent = cash(r[1]);
       d.appendChild(k); d.appendChild(v); rows.appendChild(d);
     });
     c.appendChild(rows);
+
+    var oneOffs = overheads &&
+      (fv.basis === "monthly" ? overheads.oneOffMonth : overheads.oneOffWeek);
+    if (oneOffs && oneOffs.length) {
+      var note = document.createElement("p");
+      note.className = "hcard-oneoff";
+      note.textContent = "Plus one-off this " + (fv.basis === "monthly" ? "month" : "week") +
+        ": " + oneOffs.map(function (o) {
+          return o.item + " (" + cash(o.amount) + ")";
+        }).join(", ") + " — not included in the figure above.";
+      c.appendChild(note);
+    }
+
     return c;
   }
 
@@ -1813,7 +1899,10 @@
     var dy = state.sessions.filter(isDay);
     fv.cards.appendChild(headCard("Evening programme", agg(ev), false));
     fv.cards.appendChild(headCard("Day programme", agg(dy), false));
-    fv.cards.appendChild(headCard("Combined", agg(state.sessions), true));
+    /* Overheads are a whole-business fact, not an Evening or Day one, so
+       they only ever apply to the Combined card. */
+    var overheads = state.overheads && state.overheads.length ? overheadTotals() : null;
+    fv.cards.appendChild(headCard("Combined", agg(state.sessions), true, overheads));
   }
 
   function renderLevel(node) {

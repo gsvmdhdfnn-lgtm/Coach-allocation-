@@ -46,8 +46,14 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
   Signed off: "they all look great". The headline carries the fact, not the
   label, and covered sessions are not faded — a coach glancing at a phone
   reads four words and needs them to answer "do I turn up?".
-- Sample handbook, venue, resource, calendar and change data so the empty
-  sections can be judged
+- Overheads — company-wide costs (admin, insurance, payment fees) as a
+  third cost category alongside coach and venue cost. Shows on the
+  Combined financials card only, as "net profit after overheads", with
+  one-offs called out separately rather than blended in. First pass, not
+  production-secure yet — see the security note in config.js and README.
+- Masthead renamed **"Coaches Hub"**
+- Sample handbook, venue, resource, calendar, change and overheads data so
+  the empty sections can be judged
 
 ## Next — tomorrow, at the laptop
 
@@ -141,12 +147,33 @@ infrastructure). Both run the identical report logic against Sessions +
 Terms + Changes + Calendar; building one does not cost building the other
 later, since only the trigger differs.
 
-**Overheads — a third cost category, alongside coach and venue cost.**
-David's own examples: admin, payment processing fees, insurance. These do
-not belong to a session the way coach and venue cost do - insurance is not
-a fact about Tuesday at Freemen's, it is a fact about the business - so
-this should not be bolted onto Sessions or Financials as another
-per-session column. It wants its own tab.
+**Overheads — a third cost category, alongside coach and venue cost.
+BUILT AND IN THE PREVIEW**, as a first pass David can see the shape of, not
+the final production version. David's own examples: admin, payment
+processing fees, insurance. These do not belong to a session the way coach
+and venue cost do - insurance is not a fact about Tuesday at Freemen's, it
+is a fact about the business - so it lives in its own tab, not bolted onto
+Sessions or Financials as another per-session column.
+
+What's actually built: `overheadsCsvUrl` (optional, like everything else),
+loaded only after the Financials password succeeds. The Combined card in
+the Financials summary gains "Session profit" and "Overheads" lines and a
+new headline - net profit after overheads, captioned so it's never
+mistaken for the old figure. Evening and Day cards are untouched, since
+overheads are a whole-business fact, not a programme one. A one-off due
+this period is shown as its own line, not folded into the monthly average
+- "Plus one-off this month: New laptop (£650) - not included in the figure
+above" - same reasoning as everywhere else in this app: a snapshot and a
+total are different questions, don't blend them.
+
+**Real gap, flagged plainly, not fixed:** `overheadsCsvUrl` is NOT
+encrypted the way `financials` is - it is only ever fetched after the real
+password succeeds, which is the app's behaviour, not actual protection.
+The URL itself would sit in config.js in the clear. Before this carries
+real numbers it needs the same AES-GCM treatment as `financials` - a
+second encrypted blob (same password, its own salt/iv/ciphertext), not a
+change to the existing one. Written in a comment above `overheadsCsvUrl`
+in config.js too, so it can't be missed by whoever wires up the real tab.
 
 One row shape for both one-off and regular, reusing the convention already
 established on `Terms` (blank end = still going, so it is one rule to learn
@@ -298,15 +325,17 @@ David: "I like that calendar link with the session."
 
 Things I picked or guessed that are David's call:
 
-- Masthead says **"Team Hub"** — right name?
-- Home opens with **sessions / coaches / venues / days** counts — useful or
-  noise?
-- Section order puts **Home first**. Schedule is what people will open most —
-  argument for making it the landing page and dropping Home
+- ~~Masthead name~~ DECIDED: **"Coaches Hub"**. Done.
+- Home opens with **sessions / coaches / venues / days** counts. David:
+  happy with the Home section as a concept, still thinking about whether
+  these specific stats are the right ones - not a "fix this", a "give me
+  a minute".
+- ~~Nav order~~ DECIDED: happy with it as is.
 - Coach side is **open to anyone with the link**. Fine for now; changes when
   coach codes arrive
-- Venues: bare name and a Directions button for venues with no detail. Enough,
-  or should every venue get an address?
+- Venues: bare name and a Directions button for venues with no detail.
+  DECIDED - "should all get address and information eventually." Not a
+  quick fill-in job (16 venues), but the direction is settled.
 - **Past weeks on the live picker — David wants this.** Currently forward
   only (this week + 3). Extending it backward is simple and not yet built.
   Flagged so it doesn't get lost, but see the note below on what it can and

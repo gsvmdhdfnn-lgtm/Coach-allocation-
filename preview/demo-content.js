@@ -43,6 +43,26 @@
     return "data:text/csv;charset=utf-8," + encodeURIComponent(text);
   }
 
+  if (!cfg.overheadsCsvUrl) {
+    /* David's own examples: admin, payment fees, insurance - a mix of
+       regular costs on different cadences plus one genuine one-off, dated
+       into the current month so it actually shows in the demo. */
+    var thisMonthStart = new Date();
+    thisMonthStart.setDate(14);   // any day this month, clear of month-end edge cases
+    var oneOffDate = thisMonthStart.getFullYear() + "-" +
+      String(thisMonthStart.getMonth() + 1).padStart(2, "0") + "-" +
+      String(thisMonthStart.getDate()).padStart(2, "0");
+
+    cfg.overheadsCsvUrl = asCsv(
+      "item,category,amount,repeats,starts,ends,note\n" +
+      "Public liability insurance,Insurance,840,annually," + monday(-8) + ",,Renews each January\n" +
+      "Accounting software,Admin,29,monthly," + monday(-8) + ",,\n" +
+      "Bookkeeper,Admin,180,monthly," + monday(-8) + ",,\n" +
+      "Card payment fees,Payment fees,65,monthly," + monday(-8) + ",,Rough average - see README\n" +
+      "New laptop,Admin,650,," + oneOffDate + ",,One-off purchase\n");
+    used = true;
+  }
+
   if (!cfg.calendarCsvUrl) {
     cfg.calendarCsvUrl = asCsv(
       "week_commencing,week_no,label,theme,running\n" +
