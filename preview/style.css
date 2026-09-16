@@ -718,6 +718,61 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
   table.bd th, table.bd td { padding: 9px 10px; }
 }
 
+/* Custom filter — day, time, venue; independent of the tree below */
+.fin-filter {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin-bottom: 22px;
+}
+.fin-filter-title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .015em;
+  color: var(--brand-blue);
+}
+@media (prefers-color-scheme: dark) { .fin-filter-title { color: var(--accent); } }
+.fin-filter-sub { margin: 0 0 16px; font-size: .86rem; color: var(--ink-faint); }
+
+.filter-days { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.day-btn {
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.day-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-btn.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .day-btn.is-on { color: #0c1a16; } }
+
+.filter-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.filter-line .fin-select { width: auto; flex: 1 1 200px; max-width: 320px; }
+.filter-line input[type="time"] {
+  font: inherit;
+  padding: 11px 13px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.filter-to { font-size: .85rem; color: var(--ink-faint); }
+.filter-clear { margin-left: auto; }
+
+@media (max-width: 560px) {
+  .filter-line { align-items: stretch; }
+  .filter-clear { margin-left: 0; }
+}
+
 /* Cascading breakdown pickers */
 .fin-pickers {
   display: flex;

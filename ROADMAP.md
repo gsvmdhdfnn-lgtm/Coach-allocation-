@@ -54,6 +54,12 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Masthead renamed **"Coaches Hub"**
 - Sample handbook, venue, resource, calendar, change and overheads data so
   the empty sections can be judged
+- Custom filter on the Financials page — day of the week, time window,
+  venue, any combination, sitting above the programme tree and independent
+  of it. Reads the raw `venue` column, never the Venues-page alias, so the
+  Freemen's evening club and the Freemen's school coaching contract stay
+  two different answers, on purpose — see the roadmap entry further down
+  for why.
 
 ## Next — tomorrow, at the laptop
 
@@ -265,28 +271,39 @@ below - a forecast that only counts coach and venue cost while ignoring
 insurance and admin overstates what the business actually brings in, so
 the two land together.
 
-**Flexible financial filtering — David's follow-up, folded into the same
-tool as the date-range forecast below, not a separate build.** Two
-examples he gave: "all afterschool clubs, 3-4:30pm" and "Monday evening at
-Freemen's" (one venue, several different sessions running there). These
-are two different KINDS of question, worth keeping distinct:
+**Flexible financial filtering — David's follow-up, BUILT in the preview.**
+Two examples he gave: "all afterschool clubs, 3-4:30pm" and "Monday evening
+at Freemen's" (one venue, several different sessions running there).
 
-- "By venue" is a GROUPING, same shape as the existing "By coach" view -
-  it already works, proven, just needs a venue-shaped sibling in the same
-  dropdown. Picking "By venue" -> Freemen's -> Monday shows everything
-  there regardless of which school or programme it belongs to. Gets the
-  Freemen's alias fix (built for the Venues section) for free, so the two
-  spellings of that venue do not split into separate entries.
-- "3-4:30pm across everything" is a FILTER, not a category to pick from a
-  list - an open range, typed in. This is the same tool as the date-range
-  forecast below, just filtering time-of-day instead of date. Rather than
-  build these as two separate features, build ONE flexible filter - date
-  range, time-of-day range, venue, day of week, any combination - and both
-  of David's examples become different uses of the same tool rather than
-  two bespoke builds.
+Built as a "Custom filter" panel on the Financials page, sitting above the
+existing programme tree and independent of it: day of the week, a time
+window, a venue, any combination. Not a dropdown to drill into like the
+tree - a set of filters that combine, so "Monday" + "Freemen's" together is
+one query, not two separate views.
 
-Not built - a design, connected explicitly to the forecast entry below so
-they get built together rather than drifting into duplicate mechanisms.
+**The venue here is deliberately the raw `venue` column, never the
+Venues-page alias.** David was explicit about this one: he wants "the
+Monday session hosted on the venue Freemen's, not the coaching done at the
+school Freemen's" kept apart, not folded together. That is exactly what
+`canonicalVenue`/`venueAliases` were already built NOT to do to the
+financial formulas (see "One place, two names on the schedule" further
+down) - the filter reads `s.venue` straight off the Sessions tab, so the
+evening club and the school coaching contract stay two different answers
+even though they share a car park. Confirmed working end to end with a
+local test fixture: filtering to "City of London Freemen's" finds only the
+two evening club sessions there, never the school's PE lesson.
+
+Time-of-day works as a genuine overlap check (a session counts if any part
+of it falls in the window), not just a start-time match, so "3-4:30pm"
+correctly catches a session that starts at 3:00 as well as one running
+3:15-4:15.
+
+**Not yet included: a date range.** "This term", "this year", a custom
+date span - that is still the date-range forecast entry below, not built
+yet, and still worth keeping as one shared idea: whenever that gets built,
+a date range becomes a fifth filter on this same panel rather than a
+separate tool, for the same "one mechanism, not two" reason this was
+designed this way in the first place.
 
 **Financial forecast / date-range P&L — new, well-specified, David's idea.**
 Sits ON TOP of the term-accuracy fix above, not alongside it - only makes

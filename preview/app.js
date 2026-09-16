@@ -239,6 +239,26 @@
     return (sh < 8 ? sh + 12 : sh) * 60 + sm;   // no marker: assume afternoon
   }
 
+  /** Minutes past midnight for the end of a range like "6:00-7:30pm". */
+  function endMinutes(time) {
+    var m = String(time).match(
+      /(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?(?:\s*[-–—]\s*|\s+to\s+)(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i);
+    if (!m) return null;
+
+    var smer = m[3] && m[3].toLowerCase();
+    var eh = +m[4], em = +(m[5] || 0), emer = m[6] && m[6].toLowerCase();
+    var mer = emer || smer;
+
+    function to24(h, mr) {
+      if (!mr) return h;
+      if (mr === "pm" && h !== 12) return h + 12;
+      if (mr === "am" && h === 12) return 0;
+      return h;
+    }
+
+    return mer ? to24(eh, mer) * 60 + em : (eh < 8 ? eh + 12 : eh) * 60 + em;
+  }
+
   /* ====================================================================== *
    * Loading
    * ====================================================================== */
@@ -1637,10 +1657,18 @@
     cards:  document.getElementById("head-cards"),
     picks:  document.getElementById("fin-pickers"),
     detail: document.getElementById("fin-detail"),
+    filterControls: document.getElementById("fin-filter-controls"),
+    filterResult:   document.getElementById("fin-filter-result"),
     basis:  "monthly",
     nodes:  {},
-    node:   null
+    node:   null,
+    /* Independent of the programme tree above: a day, a venue and/or a
+       time window, any combination. `days` holds the ones switched on. */
+    filter: { days: {}, venue: "", from: "", to: "" }
   };
+
+  var DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                   "Saturday", "Sunday"];
 
   /** Totals for a set of sessions, expressed in BOTH bases. */
   function agg(list) {
@@ -2020,6 +2048,241 @@
   }
 
 
+  /* ------------------------- custom filter ------------------------- *
+   * David's own example: "Monday sessions hosted at the venue Freemen's"
+   * is not the same question as "coaching done at the school Freemen's" -
+   * the venue-hire evening club and the school coaching contract are two
+   * different pieces of business that happen to share a car park (see the
+   * comment on canonicalVenue). So this reads the raw s.venue the Sessions
+   * tab actually has, never the Venues-page alias, and combines freely with
+   * a day of the week and/or a time window - "afterschool clubs 3-4:30pm"
+   * is the same tool, just filtering by time instead of by venue. */
+
+  function timeToMinutes(hhmm) {
+    var m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || "");
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  }
+
+  function filterActive() {
+    return Object.keys(fv.filter.days).some(function (d) { return fv.filter.days[d]; }) ||
+      !!fv.filter.venue || !!fv.filter.from || !!fv.filter.to;
+  }
+
+  function filteredSessions() {
+    var days = Object.keys(fv.filter.days).filter(function (d) { return fv.filter.days[d]; });
+    var venue = fv.filter.venue;
+    var from = timeToMinutes(fv.filter.from);
+    var to = timeToMinutes(fv.filter.to);
+    return state.sessions.filter(function (s) {
+      if (days.length && days.indexOf(s.day) === -1) return false;
+      if (venue && venueKey(s.venue) !== venueKey(venue)) return false;
+      if (from != null || to != null) {
+        var st = s.startMin;
+        if (st == null) return false;
+        var en = endMinutes(s.time);
+        if (en == null) en = st;
+        if (from != null && en < from) return false;
+        if (to != null && st > to) return false;
+      }
+      return true;
+    });
+  }
+
+  /** Every raw venue string on the schedule, unfolded — not canonicalVenue,
+      on purpose: this is the tool for telling the two Freemen's apart. */
+  function rawVenues() {
+    var seen = {}, out = [];
+    state.sessions.forEach(function (s) {
+      var v = s.venue || "";
+      if (!v || seen[venueKey(v)]) return;
+      seen[venueKey(v)] = true;
+      out.push(v);
+    });
+    return out.sort(function (a, b) { return a.localeCompare(b, "en-GB"); });
+  }
+
+  function renderFilterPanel() {
+    var box = fv.filterControls;
+    box.innerHTML = "";
+
+    var dayRow = document.createElement("div");
+    dayRow.className = "filter-days";
+    DAY_ORDER.forEach(function (d) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "day-btn" + (fv.filter.days[d] ? " is-on" : "");
+      b.setAttribute("aria-pressed", fv.filter.days[d] ? "true" : "false");
+      b.textContent = d.slice(0, 3);
+      b.addEventListener("click", function () {
+        fv.filter.days[d] = !fv.filter.days[d];
+        renderFilterPanel();
+      });
+      dayRow.appendChild(b);
+    });
+    box.appendChild(dayRow);
+
+    var line = document.createElement("div");
+    line.className = "filter-line";
+
+    var venueSel = document.createElement("select");
+    venueSel.className = "fin-select";
+    venueSel.setAttribute("aria-label", "Venue");
+    venueSel.appendChild(option("", "Any venue", !fv.filter.venue));
+    rawVenues().forEach(function (v) {
+      venueSel.appendChild(option(v, v, fv.filter.venue === v));
+    });
+    venueSel.addEventListener("change", function () {
+      fv.filter.venue = venueSel.value;
+      renderFilterResult();
+    });
+    line.appendChild(venueSel);
+
+    var fromInput = document.createElement("input");
+    fromInput.type = "time";
+    fromInput.value = fv.filter.from;
+    fromInput.setAttribute("aria-label", "From time");
+    fromInput.addEventListener("change", function () {
+      fv.filter.from = fromInput.value;
+      renderFilterResult();
+    });
+    line.appendChild(fromInput);
+
+    var toLabel = document.createElement("span");
+    toLabel.className = "filter-to";
+    toLabel.textContent = "to";
+    line.appendChild(toLabel);
+
+    var toInput = document.createElement("input");
+    toInput.type = "time";
+    toInput.value = fv.filter.to;
+    toInput.setAttribute("aria-label", "To time");
+    toInput.addEventListener("change", function () {
+      fv.filter.to = toInput.value;
+      renderFilterResult();
+    });
+    line.appendChild(toInput);
+
+    if (filterActive()) {
+      var clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "btn btn-quiet filter-clear";
+      clear.textContent = "Clear filter";
+      clear.addEventListener("click", function () {
+        fv.filter = { days: {}, venue: "", from: "", to: "" };
+        renderFilterPanel();
+      });
+      line.appendChild(clear);
+    }
+    box.appendChild(line);
+
+    renderFilterResult();
+  }
+
+  function renderFilterResult() {
+    var out = fv.filterResult;
+    out.innerHTML = "";
+
+    if (!filterActive()) {
+      var hint = document.createElement("p");
+      hint.className = "fin-note";
+      hint.textContent = "Choose a day, venue or time window above for a custom total.";
+      out.appendChild(hint);
+      return;
+    }
+
+    var list = filteredSessions();
+    var a = agg(list);
+    var f = a[fv.basis];
+
+    var panel = document.createElement("div");
+    var crumb = document.createElement("p");
+    crumb.className = "crumb";
+    crumb.style.margin = "0 0 14px";
+    crumb.textContent = list.length + (list.length === 1 ? " session" : " sessions") +
+      (a.participants ? " · " + a.participants + " participants" : "") +
+      " · figures " + (fv.basis === "monthly" ? "per month" : "per week");
+    panel.appendChild(crumb);
+
+    if (!list.length) {
+      var none = document.createElement("p");
+      none.className = "fin-note";
+      none.textContent = "No sessions match that filter.";
+      panel.appendChild(none);
+      out.appendChild(panel);
+      return;
+    }
+
+    var grid = document.createElement("div");
+    grid.className = "level-grid";
+    grid.appendChild(statCell("Revenue (net)", cash(f.net)));
+    grid.appendChild(statCell("Coach cost", cash(f.coach)));
+    grid.appendChild(statCell("Venue cost", cash(f.venue)));
+    grid.appendChild(statCell("Profit", cash(f.profit), f.profit >= 0 ? "pos" : "neg"));
+    panel.appendChild(grid);
+    if (a.missing) {
+      var w = document.createElement("p");
+      w.className = "fin-note";
+      w.textContent = a.missing + " session" + (a.missing === 1 ? " has" : "s have") +
+        " no row on the Financials tab and are left out of these totals.";
+      panel.appendChild(w);
+    }
+    out.appendChild(panel);
+
+    var scroll = document.createElement("div");
+    scroll.className = "bd-wrap";
+    var t = document.createElement("table");
+    t.className = "bd";
+    t.innerHTML = "<thead><tr><th>Session</th><th>Day</th><th>Venue</th>" +
+      "<th>Revenue</th><th>Profit</th></tr></thead>";
+    var tb = document.createElement("tbody");
+
+    list.slice().sort(function (x, y) {
+      var dx = DAY_ORDER.indexOf(x.day), dy = DAY_ORDER.indexOf(y.day);
+      if (dx !== dy) return dx - dy;
+      return (x.startMin || 0) - (y.startMin || 0);
+    }).forEach(function (s) {
+      var fin = state.financials && state.financials[s.id];
+      var tr = document.createElement("tr");
+
+      var name = document.createElement("td");
+      name.className = "name";
+      name.textContent = s.name;
+      var sub = document.createElement("span");
+      sub.className = "sub";
+      sub.textContent = s.time || "Time TBC";
+      name.appendChild(sub);
+      tr.appendChild(name);
+
+      [s.day, s.venue || "—"].forEach(function (v) {
+        var td = document.createElement("td");
+        td.style.textAlign = "left";
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+
+      var netCell = document.createElement("td");
+      var profitCell = document.createElement("td");
+      if (fin) {
+        var per = String(fin.period || "").toLowerCase();
+        var to = fv.basis === "monthly" ? (per === "weekly" ? WEEKS : 1)
+                                        : (per === "monthly" ? 1 / WEEKS : 1);
+        netCell.textContent = cash((num(fin.revenue_net) || 0) * to);
+        var profit = (num(fin.profit) || 0) * to;
+        profitCell.textContent = cash(profit);
+        profitCell.className = profit >= 0 ? "pos" : "neg";
+      } else {
+        netCell.textContent = "—";
+        profitCell.textContent = "—";
+      }
+      tr.appendChild(netCell);
+      tr.appendChild(profitCell);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    scroll.appendChild(t);
+    out.appendChild(scroll);
+  }
+
   /* ---------------------------- by coach ---------------------------- */
 
   /** A coach's hourly rate, evening or day, from the Coaches tab. */
@@ -2271,6 +2534,7 @@
 
   function renderFinView() {
     buildTree();
+    renderFilterPanel();
     selectNode(fv.node && (fv.node.coachView || fv.nodes[fv.node.key])
                  ? fv.node.key : "all");
   }
@@ -2282,6 +2546,7 @@
         o.classList.toggle("is-on", o === b);
       });
       if (fv.node) selectNode(fv.node.key);
+      renderFilterResult();
     });
   });
 

@@ -222,6 +222,35 @@ password exists to hide, so this wants the same AES-GCM treatment
 `financials` already has before it carries real numbers — see the comment
 above `overheadsCsvUrl` in `config.js`.
 
+## Custom filter — the Financials page, sliced any way
+
+The programme tree above (Evening/Day → category or school → session name)
+is one fixed way of grouping the same sessions. **Custom filter**, sitting
+above it on the Financials page, is a second, independent tool for cutting
+across that tree instead of following it: pick any day of the week, a time
+window, a venue, or any combination, and it totals whatever matches.
+
+It exists for questions the tree can't answer on its own — David's own
+examples:
+
+- *"How does Monday evening at Freemen's do?"* — a day plus a venue.
+- *"How do all the afterschool clubs do, roughly 3-4:30pm?"* — a time
+  window on its own, regardless of venue or school.
+
+**The venue list here is deliberately the raw `venue` column, not the
+Venues-page alias.** City of London Freemen's is two different pieces of
+business on the Sessions tab — the school we coach for (`client`) and the
+pitches we hire for the evening club (`venue`) — and the alias in
+`venueAliases` that folds them into one Venues card on purpose does **not**
+apply here, for the same reason it doesn't apply to the programme tree:
+filtering by "venue" has to mean the evening club, not the school contract,
+or the two get counted as one thing they aren't. See "One place, two names
+on the schedule" below for the full story.
+
+The result shows the same figures as everywhere else on this page — net
+revenue, coach cost, venue cost, profit — plus the list of sessions that
+matched, so it's obvious what got counted and what didn't.
+
 ## "Their own space" — coach codes
 
 Each coach gets a six-character code. Their link is the site address plus
