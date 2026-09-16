@@ -141,6 +141,39 @@ infrastructure). Both run the identical report logic against Sessions +
 Terms + Changes + Calendar; building one does not cost building the other
 later, since only the trigger differs.
 
+**Overheads — a third cost category, alongside coach and venue cost.**
+David's own examples: admin, payment processing fees, insurance. These do
+not belong to a session the way coach and venue cost do - insurance is not
+a fact about Tuesday at Freemen's, it is a fact about the business - so
+this should not be bolted onto Sessions or Financials as another
+per-session column. It wants its own tab.
+
+One row shape for both one-off and regular, reusing the convention already
+established on `Terms` (blank end = still going, so it is one rule to learn
+across the whole workbook, not a new one per tab):
+
+  `Overheads`: item, category, amount, repeats, starts, ends, note
+
+`repeats` blank = a one-off, counted once on `starts`. `repeats` set to
+monthly/quarterly/annually = recurring from `starts` until `ends` (blank =
+ongoing).
+
+**Flagged, not yet decided:** payment processing fees are not a fixed
+amount like insurance - they are a percentage of revenue collected, so they
+move with how much money actually came in rather than sitting still like a
+subscription. Two honest options when this gets built: model it properly
+as a percentage of revenue for the period (more setup, exact), or enter a
+rough average monthly figure (simpler, approximate). David's call, not
+mine, when the time comes.
+
+**Where it lands:** whole-company profit becomes session profit (revenue
+minus coach cost minus venue cost, already correct) MINUS whatever
+Overheads says for that period - applied once at the business level, never
+per session. This is not a separate build from the financial forecast
+below - a forecast that only counts coach and venue cost while ignoring
+insurance and admin overstates what the business actually brings in, so
+the two land together.
+
 **Financial forecast / date-range P&L — new, well-specified, David's idea.**
 Sits ON TOP of the term-accuracy fix above, not alongside it - only makes
 sense once a session's real weeks-running is correct, so build it after,
