@@ -68,6 +68,17 @@ window.APP_CONFIG = {
     "City of London Freemen's": "City of London Freemen's School"
   },
 
+  /* Coach codes, for "their own space". Normally these live in a `code`
+     column on the Coaches tab (with an `owner` column for David and Josh),
+     and the app reads them from there — this is only for trying it out
+     before that column exists. Written as
+       "Coach name": "CODE"                for a coach
+       "Coach name": { code: "…", owner: true }   for an owner
+     A code decides what the hub SHOWS. It is not a lock: the schedule is a
+     published CSV and always readable. That is fine for a rota; anything
+     genuinely private has to come through the Apps Script door instead. */
+  coachCodes: {},
+
   /* Coaches who appear under more than one name.
      Written as  "name as it appears": "the real coach".
      Matching ignores case and extra spaces. The Coaches tab can carry an

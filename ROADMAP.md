@@ -28,6 +28,10 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Venue aliasing, so one place named twice on the schedule is one card
 - Resources section — term plans and session posters as image cards, plus
   links out to forms and the website
+- Coach codes — a coach's link opens on their own week, Schedule becomes
+  "My week", the home page shows their numbers, the financial side
+  disappears. Owners keep everything. Running on sample codes in
+  `config.js` until the Coaches tab has a `code` column.
 - Sample handbook, venue and resource content so the empty sections can be
   judged
 
@@ -44,7 +48,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
    images can be loaded from directly; a plain Drive sharing link will not
    do it (the script's note on the `image_url` header explains the
    workaround).
-7. **Add an `Ideas` tab** and show it in the hub behind the Financials
+7. **Run `addCoachCodes`** in the same script — adds `code` and `owner`
+   columns to the Coaches tab and fills in a code for everyone. Put YES
+   against David and Josh. Then each coach's link is the site address plus
+   `#me=THEIRCODE`.
+8. **Add an `Ideas` tab** and show it in the hub behind the Financials
    password — agreed. Same pattern as the Handbook, just gated, so David can
    add a row from his phone in the Sheets app and both he and Josh see the
    list. Replaces this file as the place ideas get captured; this file stays

@@ -22,7 +22,9 @@
     aliases: {},         // lowercased alias -> canonical name
     financials: null,    // session_id -> row, once unlocked
     selected: null,
-    view: "home"
+    view: "home",
+    codes: null,         // CODE -> { name, owner }
+    me: null             // whoever is signed in, if anyone
   };
 
   var el = {
@@ -49,6 +51,10 @@
     home:        document.getElementById("home"),
     tiles:       document.getElementById("home-tiles"),
     stats:       document.getElementById("hero-stats"),
+    title:       document.getElementById("hero-title"),
+    blurb:       document.getElementById("hero-blurb"),
+    signin:      document.getElementById("home-signin"),
+    badCode:     false,
     venues:      document.getElementById("venues"),
     venueList:   document.getElementById("venue-list"),
     handbook:    document.getElementById("handbook"),
@@ -301,6 +307,96 @@
     if (!state.sessions.length) throw dataError("Sessions", "it has no rows");
   }
 
+  /* ====================================================================== *
+   * Who is looking
+   * ====================================================================== *
+   * A coach gets a code, not a password: nothing to reset, nothing to
+   * remember, and clearing it removes their access. It comes from a `code`
+   * column on the Coaches tab, or from config.js while that column does not
+   * exist yet.
+   *
+   * This decides what the hub SHOWS, not what it will hand over. The whole
+   * schedule is a published CSV, so a coach who went looking could read all
+   * of it. That is fine for a rota. It is not fine for feedback, which is
+   * why feedback will come through the Apps Script door instead.
+   * ====================================================================== */
+
+  var ME_KEY = "je-hub-code";
+
+  function truthy(v) { return /^(y|yes|true|1|owner)$/i.test(String(v || "").trim()); }
+
+  function buildCodes() {
+    var byCode = Object.create(null);
+
+    function add(name, code, owner) {
+      code = String(code || "").trim().toUpperCase();
+      if (!code || !name) return;
+      byCode[code] = { name: name, owner: !!owner };
+    }
+
+    /* The Coaches tab wins, because that is where this lives in the end. */
+    Object.keys(state.rates).forEach(function (k) {
+      var r = state.rates[k];
+      add(r.coach_name, r.code, truthy(r.owner));
+    });
+
+    Object.keys(CFG.coachCodes || {}).forEach(function (name) {
+      var v = CFG.coachCodes[name];
+      if (typeof v === "string") add(name, v, false);
+      else if (v) add(name, v.code, v.owner);
+    });
+
+    state.codes = byCode;
+  }
+
+  function lookUpCode(code) {
+    var who = state.codes[String(code || "").trim().toUpperCase()];
+    if (!who) return null;
+    var coach = findCoach(who.name);
+    return coach ? { name: coach.name, owner: who.owner, coach: coach } : null;
+  }
+
+  function rememberCode(code) {
+    try { localStorage.setItem(ME_KEY, code); } catch (e) { /* private window */ }
+  }
+
+  function forgetCode() {
+    try { localStorage.removeItem(ME_KEY); } catch (e) {}
+    state.me = null;
+    state.selected = null;
+    el.input.value = "";
+    setView("home");
+  }
+
+  /**
+   * A code arrives in a link the first time and is remembered after that.
+   * It is then taken back out of the address bar, so a screenshot of the
+   * page does not hand it to anyone - the link in their messages is still
+   * the way back if they clear their browser.
+   */
+  /* A bad code is left in the bar on purpose, so a refresh still shows the
+     error rather than silently forgetting what went wrong. */
+  function stripCode() {
+    var rest = (location.hash || "").replace(/^#/, "").split("&")
+      .filter(function (part) { return part && !/^me=/.test(part); }).join("&");
+    history.replaceState(null, "",
+      rest ? "#" + rest : location.pathname + location.search);
+  }
+
+  function signIn() {
+    var m = /(?:^|[#&])me=([^&]+)/.exec(location.hash || "");
+    var fromLink = m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
+    var stored = null;
+    try { stored = localStorage.getItem(ME_KEY); } catch (e) {}
+
+    var who = fromLink ? lookUpCode(fromLink) : null;
+    if (who) { rememberCode(fromLink); stripCode(); }
+    else if (stored) who = lookUpCode(stored);
+
+    state.me = who;
+    return { me: who, badCode: !!fromLink && !who };
+  }
+
   /** Every coach on any session, plus anyone listed on the Coaches tab. */
   function buildCoachList() {
     var byKey = Object.create(null);
@@ -387,12 +483,18 @@
     if (hub.navHandbook) hub.navHandbook.hidden = !hasTab(CFG.infoCsvUrl);
     if (hub.navResources) hub.navResources.hidden = !hasTab(CFG.resourcesCsvUrl);
 
+    buildCodes();
+    var signedIn = signIn();
+    hub.badCode = signedIn.badCode;
+    applyIdentity();
+
     var wanted = coachFromHash();
     if (wanted) {
       state.selected = findCoach(wanted);
       if (state.selected) el.input.value = state.selected.name;
     }
 
+    if (state.me && !state.me.owner) state.selected = state.me.coach;
     var view = viewFromHash() || (state.selected ? "schedule" : "home");
     if (view === "financials" && !state.financials) {
       setView("home", { silent: true });
@@ -402,8 +504,29 @@
     setView(view, { silent: true });
   }
 
-  /** The coach picker plus either their week or a prompt to choose one. */
+  /** Who the hub belongs to right now. A coach sees their own; an owner,
+      and anyone without a code, sees the whole team. */
+  function isMine() { return !!(state.me && !state.me.owner); }
+
+  function applyIdentity() {
+    /* The financial side is password-gated anyway, but putting it in front of
+       a coach who will never open it makes the hub feel less like theirs. */
+    var hideOwnerBits = isMine();
+    var finBtn = document.querySelector('.view-btn[data-view="financials"]');
+    if (finBtn) finBtn.hidden = hideOwnerBits;
+
+    var schedBtn = document.querySelector('.view-btn[data-view="schedule"]');
+    if (schedBtn) schedBtn.textContent = state.me ? "My week" : "Schedule";
+  }
+
+  /** Their week if we know who they are, otherwise the picker. */
   function showSchedule() {
+    if (isMine()) {
+      el.picker.hidden = true;
+      state.selected = state.me.coach;
+      render();
+      return;
+    }
     el.picker.hidden = false;
     if (state.selected) { render(); return; }
     notice("Pick a coach",
@@ -1651,16 +1774,53 @@
       blurb: "Revenue, cost and profit by programme, session and coach. Password needed." }
   ];
 
+  function firstName(n) { return String(n || "").trim().split(/\s+/)[0]; }
+
+  /** Hours a coach is down for, split where a session runs several groups. */
+  function myHours(coach) {
+    var total = 0;
+    coach.sessions.forEach(function (s) {
+      var f = state.financials && state.financials[s.id];
+      var raw = f ? num(f.hours) : null;
+      var groups = f ? (num(f.coach_groups) || 1) : 1;
+      total += Math.max(raw || 0, 1) / (groups || 1);
+    });
+    return total;
+  }
+
   function renderHome() {
-    /* A hub that opens on an empty menu feels dead, so show the week's shape. */
-    var days = {};
-    state.sessions.forEach(function (s) { if (s.day) days[s.day] = 1; });
-    var stats = [
-      [state.sessions.length, state.sessions.length === 1 ? "session a week" : "sessions a week"],
-      [state.coaches.length, "coaches"],
-      [venueGroups().length, "venues"],
-      [Object.keys(days).length, "days a week"]
-    ];
+    var me = state.me;
+    var days = {}, stats;
+
+    if (me) {
+      /* Their week, not the business's week. */
+      var mine = me.coach.sessions;
+      mine.forEach(function (s) { if (s.day) days[s.day] = 1; });
+      var venues = {};
+      mine.forEach(function (s) { venues[venueKey(canonicalVenue(s.venue))] = 1; });
+      stats = [
+        [mine.length, mine.length === 1 ? "session a week" : "sessions a week"],
+        [Object.keys(days).length, Object.keys(days).length === 1 ? "day a week" : "days a week"],
+        [Object.keys(venues).length, Object.keys(venues).length === 1 ? "venue" : "venues"]
+      ];
+      hub.title.textContent = "Hello, " + firstName(me.name);
+      hub.blurb.textContent = me.owner
+        ? "Everything the coaching team needs, in one place. You can see the whole team."
+        : "Your week, where you are coaching it, and everything else worth having to hand.";
+    } else {
+      /* A hub that opens on an empty menu feels dead, so show the week's shape. */
+      state.sessions.forEach(function (s) { if (s.day) days[s.day] = 1; });
+      stats = [
+        [state.sessions.length, state.sessions.length === 1 ? "session a week" : "sessions a week"],
+        [state.coaches.length, "coaches"],
+        [venueGroups().length, "venues"],
+        [Object.keys(days).length, "days a week"]
+      ];
+      hub.title.textContent = "Josh Evans Soccer School";
+      hub.blurb.textContent = "Everything the coaching team needs, in one place. " +
+        "The schedule comes straight from the office spreadsheet, so what you see here is what is booked.";
+    }
+
     hub.stats.innerHTML = "";
     stats.forEach(function (row) {
       var d = mk("div", "hero-stat");
@@ -1672,6 +1832,7 @@
     hub.tiles.innerHTML = "";
     TILES.forEach(function (t) {
       if (t.needs && !t.needs()) return;
+      if (t.owner && isMine()) return;   // not their part of the hub
       var b = mk("button", "tile" + (t.owner ? " tile-owner" : ""));
       b.type = "button";
       b.setAttribute("data-view", t.view);
@@ -1681,11 +1842,73 @@
       icon.setAttribute("aria-hidden", "true");
       icon.innerHTML = ICONS[t.view];
       b.appendChild(icon);
-      b.appendChild(mk("h3", null, t.title));
-      b.appendChild(mk("p", null, t.blurb));
+      b.appendChild(mk("h3", null, t.view === "schedule" && state.me ? "My week" : t.title));
+      b.appendChild(mk("p", null,
+        t.view === "schedule" && isMine()
+          ? "Every session you are down for this week, and where."
+          : t.blurb));
       if (t.owner) b.appendChild(mk("span", "tile-flag", "Owners"));
       hub.tiles.appendChild(b);
     });
+
+    renderSignIn();
+  }
+
+  /* --------------------------- the code box --------------------------- */
+
+  function renderSignIn() {
+    hub.signin.innerHTML = "";
+
+    if (state.me) {
+      var who = mk("p", "whoami");
+      who.appendChild(document.createTextNode("Signed in as "));
+      who.appendChild(mk("strong", null, state.me.name));
+      who.appendChild(document.createTextNode(
+        state.me.owner ? " — you can see the whole team. " : ". "));
+      var out = mk("button", "linkish", "Not you?");
+      out.type = "button";
+      out.addEventListener("click", forgetCode);
+      who.appendChild(out);
+      hub.signin.appendChild(who);
+      return;
+    }
+
+    var box = mk("div", "signin");
+    box.appendChild(mk("h3", null, "Got a code?"));
+    box.appendChild(mk("p", null,
+      "Put in the code you were sent and the hub opens on your week instead " +
+      "of the whole team's. It only has to be done once on this phone."));
+
+    var form = mk("form", "signin-form");
+    var input = mk("input", "signin-input");
+    input.type = "text";
+    input.placeholder = "Your code";
+    input.autocomplete = "off";
+    input.setAttribute("aria-label", "Your code");
+    input.spellcheck = false;
+    var go = mk("button", "btn btn-primary", "Open my week");
+    go.type = "submit";
+    form.appendChild(input);
+    form.appendChild(go);
+
+    var err = mk("p", "pw-error", "That code was not recognised.");
+    err.hidden = !hub.badCode;
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var who = lookUpCode(input.value);
+      if (!who) { err.hidden = false; input.select(); return; }
+      rememberCode(input.value.trim().toUpperCase());
+      state.me = who;
+      state.selected = who.owner ? state.selected : who.coach;
+      hub.badCode = false;
+      applyIdentity();
+      setView("schedule");
+    });
+
+    box.appendChild(form);
+    box.appendChild(err);
+    hub.signin.appendChild(box);
   }
 
   /* ------------------------------ venues ------------------------------ */

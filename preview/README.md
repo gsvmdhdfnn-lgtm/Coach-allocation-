@@ -60,6 +60,46 @@ A card whose image fails to load drops the picture and keeps the card, so a
 moved or re-privatised file leaves something usable rather than a broken
 icon.
 
+## "Their own space" — coach codes
+
+Each coach gets a six-character code. Their link is the site address plus
+`#me=THEIRCODE`. Opening it:
+
+- signs them in and **takes the code back out of the address bar**, so a
+  screenshot of the page does not hand it to anyone
+- remembers them on that phone, so the link is only needed once
+- opens straight on **their week** — no dropdown of twelve names
+- relabels Schedule as **My week**, shows their own counts on the home page,
+  and drops the Financials button entirely
+
+An `owner` (David, Josh) is greeted by name but keeps everything: the whole
+team, the coach dropdown and the financial side. "Not you?" on the home page
+clears it.
+
+Someone with no code sees what the hub has always shown — the whole team —
+plus a box to enter one.
+
+Codes come from a `code` column on the **Coaches** tab, with `owner` beside
+it. Run **addCoachCodes** in `Add hub tabs.gs` to create both columns and
+fill in a code for anyone without one; existing codes are never overwritten,
+so nobody's link breaks. The alphabet has no `0`, `O`, `1`, `I` or `L` in it,
+and nothing is derived from the name — a coach should not be able to guess a
+colleague's.
+
+`coachCodes` in `config.js` does the same thing without the sheet, which is
+what the preview is using at the moment.
+
+### What a code is not
+
+It decides what the hub **shows**. It is not a lock. The schedule is a
+published CSV, so a coach who went looking could read the whole thing —
+same honest caveat as the financials password, only weaker.
+
+For a rota that is fine; coaches cover for each other. Anything genuinely
+private — feedback, most obviously — has to come through an Apps Script
+`doGet` that checks the code server-side and returns only that person's
+rows, which is a different piece of work and is on the roadmap.
+
 ### One place, two names on the schedule
 
 City of London Freemen's appears twice: once as the school we coach for and

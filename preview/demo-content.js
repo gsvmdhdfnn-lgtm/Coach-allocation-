@@ -24,4 +24,30 @@
   /* The app puts a quiet line at the top of anything fed from here, so nobody
      mistakes sample wording for something the office actually wrote. */
   cfg.demoContent = used;
+
+  /* ------------------------------------------------------------------
+     Sample coach codes, so "their own space" can be tried before the
+     Coaches tab has a `code` column. Six characters, no 0/O/1/I/L, and
+     nothing derived from the name - a coach should not be able to guess
+     a colleague's.
+
+     These are throwaway. The real ones get generated into the sheet and
+     the app reads them from there instead.
+     ------------------------------------------------------------------ */
+  if (!cfg.coachCodes) {
+    cfg.coachCodes = {
+      "David":  { code: "H4RN7Q", owner: true },
+      "Josh":   { code: "T8MKW3", owner: true },
+      "Tom":     "R6XJ92",
+      "Sam":     "K3VP7D",
+      "Danny":   "W9FQ4M",
+      "Jacko":   "P2HD68",
+      "Joe":     "N7ZC35",
+      "Callum":  "B5TG94",
+      "Charlie": "V6KN59",
+      "Mat":     "M4JX76",
+      "Ollie":   "D8QW23",
+      "Zoe":     "Z3RP84"
+    };
+  }
 })();
