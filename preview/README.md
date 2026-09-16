@@ -40,6 +40,26 @@ nobody ever sees an empty page.
 3. Paste the two links into `../config.js` as `infoCsvUrl` and
    `venueInfoCsvUrl`.
 
+### One place, two names on the schedule
+
+City of London Freemen's appears twice: once as the school we coach for and
+once as the pitches we hire in the evening. They are two different pieces of
+business, so they are two different strings on the Sessions tab, and the
+financial formulas depend on them staying that way.
+
+For directions they are one car park. Put the spare spelling in the
+canonical row's `also_known_as` cell (comma-separated if there are several)
+and the two fold into one card:
+
+| venue | also_known_as |
+| --- | --- |
+| City of London Freemen's School | City of London Freemen's |
+
+Nothing is renamed. The Sessions tab, the Financials tab and every formula
+see exactly what they saw before; only the Venues section groups them. The
+same can be done in `../config.js` under `venueAliases` if you would rather
+not publish the tab yet.
+
 `Venue info` is deliberately a **separate tab from `Venues`**. The `Venues`
 tab feeds the financial formulas and its column A holds composite keys, not
 plain venue names — nothing here goes near it.

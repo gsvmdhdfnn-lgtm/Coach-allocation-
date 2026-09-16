@@ -48,6 +48,14 @@ window.APP_CONFIG = {
     iterations: 250000
   },
 
+  /* Places that appear on the schedule under more than one name, written as
+     "name as it appears": "the name to show it under". This only affects the
+     Venues section - it never changes what the Sessions tab says, so the
+     financial formulas are untouched.
+     The "Venue info" tab can carry an `also_known_as` column instead, which
+     is merged on top of this list. */
+  venueAliases: {},
+
   /* Coaches who appear under more than one name.
      Written as  "name as it appears": "the real coach".
      Matching ignores case and extra spaces. The Coaches tab can carry an

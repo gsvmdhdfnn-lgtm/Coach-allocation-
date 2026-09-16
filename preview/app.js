@@ -54,7 +54,8 @@
     handbook:    document.getElementById("handbook"),
     handbookBody:document.getElementById("handbook-body"),
     navHandbook: document.getElementById("nav-handbook"),
-    venueInfo:   null,   // venue key -> row from the Venues tab, once fetched
+    venueInfo:   null,   // venue key -> row from the Venue info tab, once fetched
+    venueAliases:null,   // another spelling -> the name to show it under
     info:        null,   // rows from the Info tab, once fetched
     infoError:   null
   };
@@ -234,6 +235,10 @@
     jobs.push(looksUnset(CFG.coachesCsvUrl)
       ? Promise.resolve(null)
       : fetchCsv(CFG.coachesCsvUrl, "Coaches").catch(function () { return null; }));
+
+    /* Venue detail rides along rather than waiting for its own section: the
+       aliases in it decide the venue count shown on the home page. */
+    jobs.push(ensureVenueInfo());
 
     return Promise.all(jobs).then(function (res) {
       buildAliases(res[1]);
@@ -1670,10 +1675,24 @@
   function venueKey(v) { return String(v || "").toLowerCase().replace(/\s+/g, " ").trim(); }
 
   /** Every venue named in the schedule, with the sessions that run there. */
+  /**
+   * One place can appear under more than one name on the schedule - a school
+   * we coach for and the same school's pitches we hire in the evening are two
+   * different pieces of business, so they are two different strings, and the
+   * financial formulas depend on them staying that way. Here a venue is only
+   * somewhere to drive to, so the aliases fold them into one card.
+   *
+   * Nothing is renamed: s.venue keeps exactly what the sheet says.
+   */
+  function canonicalVenue(name) {
+    var aliases = hub.venueAliases;
+    return (aliases && aliases[venueKey(name)]) || name;
+  }
+
   function venueGroups() {
     var by = Object.create(null);
     state.sessions.forEach(function (s) {
-      var name = s.venue || "Venue not set";
+      var name = canonicalVenue(s.venue || "Venue not set");
       var k = venueKey(name);
       if (!by[k]) by[k] = { name: name, address: "", sessions: [] };
       if (!by[k].address && s.address) by[k].address = s.address;
@@ -1683,18 +1702,45 @@
       .sort(function (a, b) { return a.name.localeCompare(b.name, "en-GB"); });
   }
 
-  /** The Venues tab, if one is published. Extra detail, never required. */
+  /** Aliases named in config.js, for before any tab is published. */
+  function seedVenueAliases() {
+    var map = Object.create(null);
+    Object.keys(CFG.venueAliases || {}).forEach(function (from) {
+      map[venueKey(from)] = CFG.venueAliases[from];
+    });
+    return map;
+  }
+
+  /**
+   * The Venue info tab, if one is published. Extra detail, never required.
+   * Its `also_known_as` column is comma-separated, the same as `coaches` on
+   * the Sessions tab, and merges on top of anything in config.js.
+   */
   function ensureVenueInfo() {
-    if (hub.venueInfo || !hasTab(CFG.venueInfoCsvUrl)) return Promise.resolve();
+    if (hub.venueInfo) return Promise.resolve();
+    if (!hasTab(CFG.venueInfoCsvUrl)) {
+      hub.venueInfo = Object.create(null);
+      hub.venueAliases = seedVenueAliases();
+      return Promise.resolve();
+    }
     return fetchCsv(CFG.venueInfoCsvUrl, "Venue info").then(function (rows) {
       var map = Object.create(null);
+      var aliases = seedVenueAliases();
       toObjects(rows, ["venue"], "Venue info").forEach(function (r) {
-        map[venueKey(r.venue)] = r;
+        var name = String(r.venue || "").trim();
+        if (!name) return;
+        map[venueKey(name)] = r;
+        String(r.also_known_as || "").split(",").forEach(function (other) {
+          var o = other.trim();
+          if (o && venueKey(o) !== venueKey(name)) aliases[venueKey(o)] = name;
+        });
       });
       hub.venueInfo = map;
+      hub.venueAliases = aliases;
     }).catch(function (e) {
       console.warn("Venue detail could not be loaded:", e);
       hub.venueInfo = Object.create(null);   // carry on with the schedule alone
+      hub.venueAliases = seedVenueAliases();
     });
   }
 
@@ -1760,11 +1806,8 @@
   }
 
   function showVenues() {
-    renderVenues();                       // schedule data alone is enough
+    renderVenues();
     hub.venues.hidden = false;
-    ensureVenueInfo().then(function () {  // then fill in the arrival detail
-      if (state.view === "venues" && hub.venueInfo) renderVenues();
-    });
   }
 
   /* ----------------------------- handbook ----------------------------- */
