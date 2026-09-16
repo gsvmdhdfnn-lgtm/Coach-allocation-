@@ -217,6 +217,48 @@ revenue. This is not separate work from the date-range financial engine
 already logged below - it is one more thing that engine has to account
 for, not a second project.
 
+**Coach rate history - same pattern again, raised by David's own example
+(Sam to £17/hr): a past session's cost should reflect the rate that was
+actually in force then, not get rewritten every time someone gets a rise.**
+
+  `Coach rates`: coach_name, rate_type (hourly/day), amount, starts
+
+Same rule as Participant history, no `ends`: the newest row for a coach
+and rate_type that has started wins. A rate never has a gap either - there
+is always some number a coach is paid - so this is the same shape, not a
+new one to learn.
+
+**Why this cannot be "right" from a formula alone, whichever tab it lives
+on - worked through properly, not glossed over.** The Coaches tab
+(`hourly_rate`/`day_rate`) and the Financials tab (`coach_cost`) are both
+LIVE snapshots: whatever they say is what they say right now, today, full
+stop. A live formula has no memory - it cannot know what Sam's rate was in
+September once October's rate has overwritten it, no matter which tab it
+reads from. So a `Coach rates` log fixes half the problem (there is now
+somewhere a date-aware calculation CAN look up "what was Sam paid on this
+date") but not the other half: nothing today writes a session's cost down
+permanently at the rate in force when it happened.
+
+The other half is the coach hours report, already above, which was already
+going to need this exact property for a different reason - "the report
+must WRITE somewhere durable, not just display a number." The same
+archive that stops the week picker's reconstruction being the only record
+is the thing that has to freeze each period's coach cost at the rate that
+applied then. Once that report exists and reads `Coach rates` (rather than
+"whatever the Coaches tab says today") when it archives a month, a later
+rate change can never retroactively change an already-archived period -
+because it is no longer a live number, it is a written fact.
+
+**What is actually achievable before that report exists:** the `Coach
+rates` tab itself - cheap, useful on its own, and the thing everything
+else will read from later. The CURRENT week/month figures the web app
+shows are correctly the CURRENT rate (same as everything else "live" in
+this app - a snapshot is meant to reflect now, not preserve history), so
+raising Sam's rate today is still the right, one-place edit for today's
+numbers. What is not achievable yet, and needs the coach hours report
+first, is a *guarantee* that a future rate change never quietly reshapes a
+month that has already closed.
+
 **Overheads — a third cost category, alongside coach and venue cost.
 BUILT AND IN THE PREVIEW**, as a first pass David can see the shape of, not
 the final production version. David's own examples: admin, payment
