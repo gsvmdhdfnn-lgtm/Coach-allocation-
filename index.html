@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coach Schedule</title>
+<meta name="description" content="Look up any coach and see every session they run this week.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9917;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <h1>Coach Schedule</h1>
+    <p class="masthead-sub">Every session, by coach, for the week.</p>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+
+  <!-- Coach picker -->
+  <section class="picker" id="picker" hidden>
+    <label class="picker-label" for="coach-input">Coach</label>
+    <div class="combo" id="combo">
+      <input
+        id="coach-input"
+        type="text"
+        class="combo-input"
+        placeholder="Search or select a coach…"
+        autocomplete="off"
+        role="combobox"
+        aria-expanded="false"
+        aria-autocomplete="list"
+        aria-controls="coach-listbox"
+        aria-haspopup="listbox">
+      <button type="button" class="combo-toggle" id="combo-toggle" aria-label="Show all coaches" tabindex="-1">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <ul class="combo-list" id="coach-listbox" role="listbox" aria-label="Coaches" hidden></ul>
+    </div>
+  </section>
+
+  <!-- Status / results -->
+  <div id="status" class="status" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Loading the schedule…</p>
+  </div>
+
+  <section id="results" hidden>
+    <div class="summary" id="summary"></div>
+    <div id="days"></div>
+  </section>
+
+</main>
+
+<footer class="footer wrap">
+  <p>Data comes live from the coaching schedule sheet. To change a session, edit the sheet — no need to touch this site.</p>
+</footer>
+
+<!-- Password dialog -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <h2 id="modal-title">Financial details</h2>
+    <p id="modal-desc" class="modal-desc">Enter the password to show revenue, costs and profit for each session.</p>
+    <form id="pw-form" novalidate>
+      <label class="sr-only" for="pw-input">Password</label>
+      <input id="pw-input" type="password" class="pw-input" autocomplete="current-password" placeholder="Password" required>
+      <p class="pw-error" id="pw-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-quiet" id="pw-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="pw-submit">Unlock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

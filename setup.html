@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coach Schedule — financial setup</title>
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<style>
+  .setup { max-width: 680px; margin: 32px auto 60px; }
+  .setup .panel {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px;
+  }
+  .setup h2 { margin: 0 0 6px; font-size: 1.1rem; font-weight: 640; }
+  .setup p.lede { margin: 0 0 20px; color: var(--ink-soft); font-size: .94rem; }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%; padding: 11px 13px; font: inherit; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 9px;
+  }
+  .field input:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+  .field .hint { margin: 6px 0 0; font-size: .82rem; color: var(--ink-faint); }
+  textarea {
+    width: 100%; min-height: 190px; margin-top: 16px; padding: 14px;
+    font: .82rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 9px; resize: vertical;
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+  .msg { font-size: .88rem; color: var(--ink-soft); }
+  .msg.bad { color: var(--negative); }
+  .msg.good { color: var(--positive); }
+  ol.steps { padding-left: 20px; color: var(--ink-soft); font-size: .92rem; }
+  ol.steps li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap"><h1>Financial setup</h1>
+  <p class="masthead-sub">Run this once to switch on the password-protected layer.</p></div>
+</header>
+
+<main class="wrap setup">
+  <div class="panel">
+    <h2>Encrypt the Financials link</h2>
+    <p class="lede">
+      Your password is used to encrypt the Financials CSV link. The encrypted
+      result is what goes into <code>config.js</code> — the link itself never
+      appears in the site's source, and the app cannot fetch the financial
+      figures until someone types the password correctly.
+    </p>
+
+    <ol class="steps">
+      <li>In the sheet: <strong>File → Share → Publish to web</strong>.</li>
+      <li>Publish the <strong>Financials</strong> tab, format <strong>CSV</strong>.</li>
+      <li>Paste that link below, pick a password, and press Generate.</li>
+    </ol>
+
+    <div class="field" style="margin-top:20px">
+      <label for="url">Published Financials CSV link</label>
+      <input id="url" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-…&amp;output=csv" autocomplete="off">
+      <p class="hint">It should end in <code>output=csv</code>.</p>
+    </div>
+
+    <div class="field">
+      <label for="pw">Password</label>
+      <input id="pw" type="text" placeholder="Choose the password you'll give to staff" autocomplete="off">
+      <p class="hint">Use something you don't use anywhere else. Longer is better.</p>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" id="go">Generate</button>
+      <button class="btn btn-quiet" id="copy" hidden>Copy</button>
+      <span class="msg" id="msg"></span>
+    </div>
+
+    <textarea id="out" readonly hidden spellcheck="false"
+      aria-label="Configuration to paste into config.js"></textarea>
+  </div>
+
+  <p class="msg" style="margin-top:18px">
+    Paste the block above over the <code>financials:</code> line in
+    <code>config.js</code>, then commit and push. Keep this page out of the
+    way of everyday users — it only generates settings, it never reveals them.
+  </p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var ITERATIONS = 250000;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var msg = $("msg"), out = $("out"), copy = $("copy");
+
+  function say(text, cls) { msg.textContent = text; msg.className = "msg " + (cls || ""); }
+
+  function bytesToB64(buf) {
+    var b = new Uint8Array(buf), s = "";
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+
+  $("go").addEventListener("click", function () {
+    var url = $("url").value.trim();
+    var pw = $("pw").value;
+
+    if (!/^https?:\/\//i.test(url)) return say("That doesn't look like a link.", "bad");
+    if (!pw) return say("Pick a password first.", "bad");
+    if (!window.isSecureContext || !window.crypto || !crypto.subtle) {
+      return say("Open this page over https (or http://localhost) — encryption " +
+                 "is not available on a file:// page.", "bad");
+    }
+    if (!/output=csv/i.test(url)) {
+      say("Warning: that link doesn't end in output=csv. Generating anyway.", "bad");
+    }
+
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var enc = new TextEncoder();
+
+    crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: salt, iterations: ITERATIONS, hash: "SHA-256" },
+          base, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+      })
+      .then(function (key) {
+        return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(url));
+      })
+      .then(function (cipher) {
+        out.value =
+          "  financials: {\n" +
+          "    salt: \"" + bytesToB64(salt) + "\",\n" +
+          "    iv: \"" + bytesToB64(iv) + "\",\n" +
+          "    ciphertext: \"" + bytesToB64(cipher) + "\",\n" +
+          "    iterations: " + ITERATIONS + "\n" +
+          "  },";
+        out.hidden = false;
+        copy.hidden = false;
+        say("Done — paste this into config.js.", "good");
+      })
+      .catch(function (e) {
+        console.error(e);
+        say("Something went wrong generating that. See the browser console.", "bad");
+      });
+  });
+
+  copy.addEventListener("click", function () {
+    out.select();
+    navigator.clipboard.writeText(out.value)
+      .then(function () { say("Copied.", "good"); })
+      .catch(function () { say("Select the text and copy it manually.", "bad"); });
+  });
+})();
+</script>
+</body>
+</html>
