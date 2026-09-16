@@ -129,6 +129,28 @@ infrastructure). Both run the identical report logic against Sessions +
 Terms + Changes + Calendar; building one does not cost building the other
 later, since only the trigger differs.
 
+**The report must WRITE somewhere durable, not just display a number.**
+David wants years of history to look back on, and the live week picker is
+the wrong tool for that: it reconstructs a week from whatever rows still
+exist on `Changes`/`Calendar`/`Terms`, so it is only as reliable as "nobody
+ever tidied up an old row" - not a promise worth relying on for real
+record-keeping. The report has to append to a permanent archive (a new tab
+per month, or rows on a running log) so the answer survives someone
+cleaning up the working tabs later. The picker is for "what does this week
+look like"; the archive is for "what actually happened in March 2027".
+
+**How the rolling dropdown works, for the record (already built, needs
+nothing further):** `weekChoices()` computes from `new Date()` - "right
+now", read fresh on every page load, never a stored list. That is why it
+never needs updating: it cannot go stale, because it never remembers what
+it showed yesterday. What DOES need occasional upkeep is the content those
+weeks describe - `Calendar` needs rows added periodically to keep themes
+showing, and any `Terms` row with an `ends` date needs the next span added
+before that date arrives, or a still-running school will wrongly read as
+"ended" until someone notices. Practical rule: leave `ends` blank unless
+the actual end date is known, rather than guessing and forgetting to
+extend it.
+
 - A `Calendar` tab: which weeks each session actually runs (half term, term
   dates), so monthly figures stop assuming 4.33 weeks of everything
 - A `Changes` log: the exceptions only — a night off, a swap, a cover, a
@@ -208,9 +230,10 @@ Things I picked or guessed that are David's call:
   coach codes arrive
 - Venues: bare name and a Directions button for venues with no detail. Enough,
   or should every venue get an address?
-- The week picker runs **this week forward only**. Should coaches be able to
-  look back at past weeks? Left out for now; nothing depends on it until the
-  hours report, which reads the sheet rather than the picker.
+- **Past weeks on the live picker — David wants this.** Currently forward
+  only (this week + 3). Extending it backward is simple and not yet built.
+  Flagged so it doesn't get lost, but see the note below on what it can and
+  can't reliably answer.
 
 ## Loose ends worth tidying
 
