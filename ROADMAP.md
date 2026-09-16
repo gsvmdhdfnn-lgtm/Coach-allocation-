@@ -5,7 +5,7 @@ conversation gets lost, and that anyone picking this up later — David, Josh,
 or me in a fresh session — can see where things stand without re-reading
 everything.
 
-Last updated: 16 September 2026
+Last updated: 16 September 2026 (late — a long session)
 
 ---
 
@@ -35,6 +35,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Week picker on "My week" — this week plus three, with the week's theme,
   and cancellations, cover and one-offs applied from a `Changes` tab.
   3 weeks ahead and cancellations stay visible, both David's call.
+- Status banners across the top of a card — red *Cancelled*, amber *Sam is
+  covering · You are not needed*, lime *Covering for Tom*, blue *One-off*.
+  Signed off: "they all look great". The headline carries the fact, not the
+  label, and covered sessions are not faded — a coach glancing at a phone
+  reads four words and needs them to answer "do I turn up?".
 - Sample handbook, venue, resource, calendar and change data so the empty
   sections can be judged
 
@@ -150,6 +155,9 @@ Things I picked or guessed that are David's call:
   coach codes arrive
 - Venues: bare name and a Directions button for venues with no detail. Enough,
   or should every venue get an address?
+- The week picker runs **this week forward only**. Should coaches be able to
+  look back at past weeks? Left out for now; nothing depends on it until the
+  hours report, which reads the sheet rather than the picker.
 
 ## Loose ends worth tidying
 
