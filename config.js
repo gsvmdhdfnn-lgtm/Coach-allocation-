@@ -26,6 +26,20 @@ window.APP_CONFIG = {
      sessions alone (you just lose the alias column and the rates). */
   coachesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=11015794&single=true&output=csv",
 
+  /* Published CSV URL for the "Venue info" tab. Public — safe to share.
+     Optional. The Venues section works from the schedule alone; this adds
+     the arrival detail (postcode, parking, where to meet, access, notes).
+     It is a separate tab from "Venues", which the financial formulas use —
+     nothing here touches those. Leave empty until the tab is published.
+     Columns: venue, address, postcode, parking, meeting_point, access, notes. */
+  venueInfoCsvUrl: "",
+
+  /* Published CSV URL for the "Info" tab — the handbook. Public — safe to
+     share. Optional: while this is empty the Handbook section is hidden
+     entirely, so nobody sees an empty page.
+     Columns: section, order, title, body. */
+  infoCsvUrl: "",
+
   /* Produced by setup.html — do not hand-edit. */
   financials: {
     salt: "yv6jJJ/oYpXFI6bYLLGgkg==",
