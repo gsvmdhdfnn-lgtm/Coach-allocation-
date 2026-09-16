@@ -147,6 +147,70 @@ infrastructure). Both run the identical report logic against Sessions +
 Terms + Changes + Calendar; building one does not cost building the other
 later, since only the trigger differs.
 
+**Camps and tours — a fourth kind of thing, not a bent version of a
+session.** David's examples: half-term camps, tours. Genuinely different
+economics from a term-time session, not just a scheduling variation -
+specific dates rather than a weekly pattern, coaches paid a flat day fee
+regardless of headcount rather than by hours/participants, parents paying
+per day rather than a termly fee. Forcing this into the existing
+Sessions/Financials machinery would produce numbers that are subtly wrong,
+not a clean fit - so it gets its own tab.
+
+Proposed: an `Events` tab, not `Camps` - a `type` column (camp/tour/
+whatever comes next) means tours and future things share one tab rather
+than needing a new one each time.
+
+  name, type, venue, day_time, starts, ends, coaches, price_per_day,
+  coach_day_fee, note
+
+Reuses existing conventions rather than inventing new ones: `coaches`
+comma-separated exactly like Sessions, `starts`/`ends` exactly like Terms.
+Each row expands into one schedule entry per day in its range, shown on a
+coach's week with its own coloured badge - same visual language as the
+existing "One-off" badge, its own colour.
+
+Financially: coach cost = coaches x coach_day_fee x days (flat, not
+derived from hours/participants). Revenue = bookings x price_per_day x
+days. This is its own small P&L, becoming a FOURTH component of Combined
+alongside Evening, Day and Overheads - Combined becomes Evening + Day +
+Events - Overheads, not just the first two minus the third as it is today.
+Deliberately kept separate from Overheads: Overheads is fixed cost that
+exists whether or not a camp runs; Events is its own income-generating
+activity with its own coaches and its own prices.
+
+Not built - a design for whenever this is wanted, following the same
+"reuse the pattern that already exists" principle as everything else on
+this list.
+
+**Participant history — the same "spans of time" pattern as Terms, applied
+to headcount.** David's own example, kept as the reference case: Academy
+U9 goes from 11 to 14 participants on 01/10/26. A date-range query should
+price weeks before that date at 11 and weeks from that date at 14,
+automatically.
+
+  `Participant history`: session_id, participants, starts
+
+Genuinely simpler than Terms in one respect, worth being clear about so
+the two don't get confused: NO `ends` column. Terms needs closed spans
+because a school can have a gap (half term - not running at all between
+two active periods). A participant count never has a gap; there is always
+some number of kids. So the rule is just "the newest row that has started
+wins" - unlike Terms, you never close off the old row when adding a new
+one.
+
+Same "one source of truth" principle already locked in for Terms: the
+LIVE participants figure shown today should be looked up from this same
+history (whichever row's `starts` covers today), not kept as a second,
+independently-editable number that could quietly disagree with the log.
+
+**Real complexity, flagged rather than glossed over:** `coach_groups` and
+`venue_groups` already derive from participant count via `COUNTIFS` - how
+many groups a school's kids split into. Once that count can change
+mid-term, those formulas need to become date-aware too, not just headline
+revenue. This is not separate work from the date-range financial engine
+already logged below - it is one more thing that engine has to account
+for, not a second project.
+
 **Overheads — a third cost category, alongside coach and venue cost.
 BUILT AND IN THE PREVIEW**, as a first pass David can see the shape of, not
 the final production version. David's own examples: admin, payment
