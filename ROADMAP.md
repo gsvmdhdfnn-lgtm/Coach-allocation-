@@ -87,6 +87,18 @@ exception either side). What is left is the financial half — using
 of everything a school never actually ran, and the coach hours report that
 reads the same two tabs to only count weeks a session genuinely happened.
 
+**Locked design decision, so it never drifts:** there is exactly ONE
+`Terms` tab. The hub, the financial formulas and the coach hours report all
+read it — none of them ever gets its own copy of a school's dates. David
+asked directly whether this could be one source rather than two, and the
+answer is yes, that was always the intent; worth spelling out so it stays
+true when someone else builds the financial half. Concretely, when that
+gets built: a Financials row looks up its school in `Terms` the same way it
+already looks up venue/day/time via `INDEX/MATCH`, counts how many
+`Calendar` weeks fall inside the start/end, and uses that instead of the
+flat `weeksPerMonth` constant. The hours report does the identical lookup
+before counting an hour worked.
+
 - A `Calendar` tab: which weeks each session actually runs (half term, term
   dates), so monthly figures stop assuming 4.33 weeks of everything
 - A `Changes` log: the exceptions only — a night off, a swap, a cover, a
