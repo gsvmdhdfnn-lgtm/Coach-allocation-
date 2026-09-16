@@ -23,6 +23,9 @@
     financials: null,    // session_id -> row, once unlocked
     selected: null,
     view: "home",
+    calendar: null,      // "YYYY-MM-DD" (a Monday) -> { weekNo, label, theme, running }
+    changes: null,       // the exceptions log, as rows
+    week: null,          // the Monday currently being shown
     codes: null,         // CODE -> { name, owner }
     me: null             // whoever is signed in, if anyone
   };
@@ -34,6 +37,7 @@
     results: document.getElementById("results"),
     summary: document.getElementById("summary"),
     days:    document.getElementById("days"),
+    weekbar: document.getElementById("weekbar"),
     combo:   document.getElementById("combo"),
     input:   document.getElementById("coach-input"),
     toggle:  document.getElementById("combo-toggle"),
@@ -250,6 +254,7 @@
     /* Venue detail rides along rather than waiting for its own section: the
        aliases in it decide the venue count shown on the home page. */
     jobs.push(ensureVenueInfo());
+    jobs.push(loadWeekData());
 
     return Promise.all(jobs).then(function (res) {
       buildAliases(res[1]);
@@ -305,6 +310,204 @@
     }).filter(function (s) { return s.id; });
 
     if (!state.sessions.length) throw dataError("Sessions", "it has no rows");
+  }
+
+  /* ====================================================================== *
+   * Which week
+   * ====================================================================== *
+   * There is a base schedule and it is mostly right. Everything that makes a
+   * given week different from it - a school's half term, a coach on holiday,
+   * a one-off a school asked for - is a row on the Changes tab.
+   *
+   * A change row targets whatever is filled in: a session_id for one
+   * session, a venue or client for everything at that place, a coach_out for
+   * everything that coach was down for. So a week's holiday is one row, not
+   * eight - and a row nobody can be bothered to write is a week the hub gets
+   * wrong.
+   * ====================================================================== */
+
+  var WEEKS_AHEAD = 3;   // this week plus three; David's call
+
+  function isoDay(d) {
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
+
+  /** The Monday of whatever week a date falls in. */
+  function mondayOf(d) {
+    var out = new Date(d.getTime());
+    out.setHours(12, 0, 0, 0);            // midday, so DST cannot shift the day
+    out.setDate(out.getDate() - ((out.getDay() + 6) % 7));
+    return out;
+  }
+
+  /** Accepts 2026-09-14 and 14/09/2026, which is how people type dates. */
+  function parseDay(v) {
+    var t = String(v || "").trim();
+    if (!t) return null;
+    var iso = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t);
+    if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3], 12);
+    var uk = /^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/.exec(t);
+    if (uk) {
+      var yr = +uk[3];
+      return new Date(yr < 100 ? 2000 + yr : yr, +uk[2] - 1, +uk[1], 12);
+    }
+    var d = new Date(t);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function loadWeekData() {
+    var jobs = [
+      hasTab(CFG.calendarCsvUrl)
+        ? fetchCsv(CFG.calendarCsvUrl, "Calendar").then(function (rows) {
+            var map = Object.create(null);
+            toObjects(rows, ["week_commencing"], "Calendar").forEach(function (r) {
+              var d = parseDay(r.week_commencing);
+              if (!d) return;
+              map[isoDay(mondayOf(d))] = {
+                weekNo: String(r.week_no || "").trim(),
+                label:  String(r.label || "").trim(),
+                theme:  String(r.theme || "").trim(),
+                running: !/^(n|no|false|0)$/i.test(String(r.running || "yes").trim())
+              };
+            });
+            state.calendar = map;
+          })
+        : Promise.resolve(),
+      hasTab(CFG.changesCsvUrl)
+        ? fetchCsv(CFG.changesCsvUrl, "Changes").then(function (rows) {
+            state.changes = toObjects(rows, ["type"], "Changes").map(function (r) {
+              var d = parseDay(r.week_commencing || r.date);
+              return {
+                week: d ? isoDay(mondayOf(d)) : "",
+                sessionId: String(r.session_id || "").trim(),
+                venue: String(r.venue || "").trim(),
+                client: String(r.client || "").trim(),
+                coachOut: String(r.coach_out || "").trim(),
+                coachIn: String(r.coach_in || "").trim(),
+                type: String(r.type || "").trim().toLowerCase(),
+                day: String(r.day || "").trim(),
+                time: String(r.time || "").trim(),
+                name: String(r.session_name || "").trim(),
+                note: String(r.note || "").trim()
+              };
+            });
+          })
+        : Promise.resolve()
+    ];
+    return Promise.all(jobs).catch(function (e) {
+      console.warn("Week data could not be loaded:", e);
+      state.calendar = state.calendar || null;
+      state.changes = state.changes || null;
+    });
+  }
+
+  function hasWeeks() { return !!(state.calendar || state.changes); }
+
+  /** This week and the next few, whether or not the Calendar tab lists them. */
+  function weekChoices() {
+    var start = mondayOf(new Date()), out = [];
+    for (var i = 0; i <= WEEKS_AHEAD; i++) {
+      var d = new Date(start.getTime());
+      d.setDate(d.getDate() + i * 7);
+      var iso = isoDay(d);
+      var info = (state.calendar && state.calendar[iso]) || {};
+      out.push({
+        iso: iso,
+        date: d,
+        thisWeek: i === 0,
+        label: info.label || "",
+        weekNo: info.weekNo || "",
+        theme: info.theme || "",
+        running: info.running !== false
+      });
+    }
+    return out;
+  }
+
+  function weekLabel(w) {
+    var wc = "w/c " + w.date.getDate() + " " +
+      ["Jan","Feb","Mar","Apr","May","Jun",
+       "Jul","Aug","Sep","Oct","Nov","Dec"][w.date.getMonth()];
+    if (w.thisWeek) return "This week — " + wc;
+    return (w.label ? w.label + " — " : "") + wc;
+  }
+
+  function changesForWeek(iso) {
+    return (state.changes || []).filter(function (c) { return c.week === iso; });
+  }
+
+  /** Does this change row point at this session? Whatever is filled in wins. */
+  function changeHits(ch, s) {
+    if (ch.sessionId) return ch.sessionId === s.id;
+    if (ch.venue) return venueKey(ch.venue) === venueKey(s.venue);
+    if (ch.client) return nameKey(ch.client) === nameKey(s.client || "");
+    if (ch.coachOut) {
+      return s.coaches.some(function (c) { return nameKey(c) === nameKey(ch.coachOut); });
+    }
+    return false;
+  }
+
+  /**
+   * One coach's week, with the changes applied. Sessions they have handed
+   * over stay on the list, greyed, rather than vanishing - otherwise a coach
+   * reads it as "deleted" and turns up anyway.
+   */
+  function weekFor(coach, iso) {
+    var chs = changesForWeek(iso);
+    var mine = [];
+
+    state.sessions.forEach(function (s) {
+      var coaches = s.coaches.slice();
+      var cancelled = null, coveredBy = null, coveringFor = null;
+
+      chs.forEach(function (ch) {
+        if (ch.type === "extra" || !changeHits(ch, s)) return;
+        if (ch.type === "cancelled") { cancelled = ch.note || "Cancelled"; return; }
+        if (ch.type === "cover" && ch.coachOut && ch.coachIn) {
+          coaches = coaches.map(function (c) {
+            return nameKey(c) === nameKey(ch.coachOut) ? ch.coachIn : c;
+          });
+          if (nameKey(ch.coachOut) === nameKey(coach.name)) coveredBy = ch.coachIn;
+          if (nameKey(ch.coachIn) === nameKey(coach.name)) coveringFor = ch.coachOut;
+        }
+      });
+
+      var onIt = coaches.some(function (c) { return nameKey(c) === nameKey(coach.name); });
+      if (!onIt && !coveredBy) return;
+
+      mine.push({
+        session: s,
+        coaches: coaches,
+        status: cancelled ? "cancelled" : coveredBy ? "covered"
+              : coveringFor ? "covering" : "on",
+        note: cancelled ||
+              (coveredBy ? coveredBy + " is covering" : "") ||
+              (coveringFor ? "Covering for " + coveringFor : "")
+      });
+    });
+
+    /* One-offs are not on the base schedule at all, so they are built here. */
+    chs.forEach(function (ch, i) {
+      if (ch.type !== "extra") return;
+      var who = splitCoaches(ch.coachIn || "");
+      if (!who.some(function (c) { return nameKey(c) === nameKey(coach.name); })) return;
+      mine.push({
+        session: {
+          id: "extra-" + iso + "-" + i,
+          name: ch.name || "One-off session",
+          programme: "", category: "", ageGroup: "", client: "",
+          day: ch.day, time: ch.time, venue: ch.venue, address: "",
+          coaches: who, startMin: startMinutes(ch.time)
+        },
+        coaches: who,
+        status: "extra",
+        note: ch.note || "Added this week"
+      });
+    });
+
+    return mine;
   }
 
   /* ====================================================================== *
@@ -563,6 +766,7 @@
 
     el.days.innerHTML = "";
     el.summary.innerHTML = "";
+    renderWeekBar(coach);
 
     if (!coach.sessions.length) {
       el.status.hidden = false;
@@ -582,25 +786,61 @@
     el.status.hidden = true;
     el.results.hidden = false;
 
-    // Summary line
+    /* Without a calendar this is still the plain base schedule. */
+    var items = state.week
+      ? weekFor(coach, state.week)
+      : coach.sessions.map(function (s) {
+          return { session: s, coaches: s.coaches, status: "on", note: "" };
+        });
+
+    /* What they are actually working, which is not the same as what is on
+       the base schedule: a session handed to someone else is not theirs. */
+    function count(status) {
+      return items.filter(function (it) { return it.status === status; }).length;
+    }
+    var doing = items.filter(function (it) {
+      return it.status !== "cancelled" && it.status !== "covered";
+    });
     var days = [];
-    coach.sessions.forEach(function (s) { if (days.indexOf(s.day) === -1) days.push(s.day); });
+    doing.forEach(function (it) {
+      if (days.indexOf(it.session.day) === -1) days.push(it.session.day);
+    });
+
+    var bits = [];
+    if (doing.length) {
+      bits.push(doing.length + (doing.length === 1 ? " session" : " sessions"));
+      bits.push(days.length + (days.length === 1 ? " day" : " days"));
+    } else {
+      bits.push("nothing on");
+    }
+    if (count("covered")) bits.push(count("covered") + " covered by someone else");
+    if (count("cancelled")) bits.push(count("cancelled") + " cancelled");
+
     var h2 = document.createElement("h2");
     h2.textContent = coach.name;
     var meta = document.createElement("span");
     meta.className = "meta";
-    meta.textContent = coach.sessions.length +
-      (coach.sessions.length === 1 ? " session" : " sessions") +
-      " · " + days.length + (days.length === 1 ? " day" : " days") + " a week";
+    meta.textContent = bits.join(" · ");
     el.summary.appendChild(h2);
     el.summary.appendChild(meta);
 
+    if (!items.length) {
+      var none = document.createElement("p");
+      none.className = "empty";
+      none.textContent = "Nothing on for " + coach.name + " this week.";
+      el.days.appendChild(none);
+      return;
+    }
+
     // Group by day, in weekday order
     var groups = [];
-    coach.sessions.forEach(function (s) {
-      var g = groups.filter(function (x) { return x.day === s.day; })[0];
-      if (!g) { g = { day: s.day, items: [] }; groups.push(g); }
-      g.items.push(s);
+    items.forEach(function (it) {
+      var g = groups.filter(function (x) { return x.day === it.session.day; })[0];
+      if (!g) { g = { day: it.session.day, items: [] }; groups.push(g); }
+      g.items.push(it);
+    });
+    groups.sort(function (a, b) {
+      return DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day);
     });
 
     groups.forEach(function (g) {
@@ -614,16 +854,63 @@
 
       var cards = document.createElement("div");
       cards.className = "cards";
-      g.items.forEach(function (s) { cards.appendChild(buildCard(s, coach)); });
+      g.items.sort(function (a, b) {
+        return (a.session.startMin || 0) - (b.session.startMin || 0);
+      });
+      g.items.forEach(function (it) {
+        cards.appendChild(buildCard(it.session, coach, it));
+      });
       wrap.appendChild(cards);
 
       el.days.appendChild(wrap);
     });
   }
 
-  function buildCard(session, coach) {
+  /* ---------------------------- the week bar ---------------------------- */
+
+  function renderWeekBar(coach) {
+    el.weekbar.innerHTML = "";
+    if (!hasWeeks()) { el.weekbar.hidden = true; return; }
+
+    var weeks = weekChoices();
+    if (!state.week) state.week = weeks[0].iso;
+    var current = weeks.filter(function (w) { return w.iso === state.week; })[0] || weeks[0];
+
+    var label = mk("label", "picker-label", "Week");
+    label.htmlFor = "week-select";
+    var sel = mk("select", "fin-select");
+    sel.id = "week-select";
+    weeks.forEach(function (w) {
+      var o = mk("option", null, weekLabel(w) + (w.running ? "" : " (nothing on)"));
+      o.value = w.iso;
+      if (w.iso === state.week) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.week = sel.value;
+      render();
+    });
+
+    var box = mk("div", "weekpick");
+    box.appendChild(label);
+    box.appendChild(sel);
+    el.weekbar.appendChild(box);
+
+    if (current.theme) {
+      var th = mk("p", "weektheme");
+      th.appendChild(mk("span", "weektheme-no",
+        current.weekNo ? "Week " + current.weekNo : "This week"));
+      th.appendChild(mk("span", "weektheme-name", current.theme));
+      el.weekbar.appendChild(th);
+    }
+    el.weekbar.hidden = false;
+  }
+
+  function buildCard(session, coach, item) {
+    var status = (item && item.status) || "on";
     var card = document.createElement("article");
-    card.className = "card";
+    card.className = "card" + (status === "cancelled" ? " is-off" :
+                               status === "covered" ? " is-handed-over" : "");
 
     var btn = document.createElement("button");
     btn.type = "button";
@@ -644,6 +931,20 @@
     // only repeat what a tag already said ("School" alongside "Day").
     var tags = document.createElement("div");
     tags.className = "tags";
+
+    if (status !== "on") {
+      var badge = document.createElement("span");
+      badge.className = "tag " + (
+        status === "cancelled" ? "tag-off" :
+        status === "covered"   ? "tag-handed" :
+        status === "covering"  ? "tag-cover" : "tag-extra");
+      badge.textContent =
+        status === "cancelled" ? "Cancelled" :
+        status === "covered"   ? "Covered" :
+        status === "covering"  ? "Covering" : "One-off";
+      tags.appendChild(badge);
+    }
+
     var shown = Object.create(null);
     [[session.ageGroup, true], [session.category, false], [session.programme, false]]
       .forEach(function (pair) {
@@ -679,8 +980,18 @@
     }
     if (session.address) facts.appendChild(fact("Address", session.address));
 
-    var others = session.coaches.filter(function (c) { return nameKey(c) !== nameKey(coach.name); });
+    /* Who is actually on it this week, which is not always the base schedule. */
+    var onIt = (item && item.coaches) || session.coaches;
+    var others = onIt.filter(function (c) { return nameKey(c) !== nameKey(coach.name); });
     facts.appendChild(fact("With", others.length ? others.join(", ") : "On their own"));
+
+    if (item && item.note) {
+      facts.appendChild(fact(
+        status === "cancelled" ? "Why" :
+        status === "covered"   ? "Cover" :
+        status === "covering"  ? "For"  : "Note",
+        item.note));
+    }
     btn.appendChild(facts);
 
     card.appendChild(btn);

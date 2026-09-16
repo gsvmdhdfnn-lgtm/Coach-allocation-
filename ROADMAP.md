@@ -32,8 +32,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
   "My week", the home page shows their numbers, the financial side
   disappears. Owners keep everything. Running on sample codes in
   `config.js` until the Coaches tab has a `code` column.
-- Sample handbook, venue and resource content so the empty sections can be
-  judged
+- Week picker on "My week" — this week plus three, with the week's theme,
+  and cancellations, cover and one-offs applied from a `Changes` tab.
+  3 weeks ahead and cancellations stay visible, both David's call.
+- Sample handbook, venue, resource, calendar and change data so the empty
+  sections can be judged
 
 ## Next — tomorrow, at the laptop
 
@@ -52,7 +55,9 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
    columns to the Coaches tab and fills in a code for everyone. Put YES
    against David and Josh. Then each coach's link is the site address plus
    `#me=THEIRCODE`.
-8. **Add an `Ideas` tab** and show it in the hub behind the Financials
+8. **Fill in `Calendar` and `Changes`** — the script creates both with the
+   next twelve weeks seeded and three example rows to delete.
+9. **Add an `Ideas` tab** and show it in the hub behind the Financials
    password — agreed. Same pattern as the Handbook, just gated, so David can
    add a row from his phone in the Sheets app and both he and Josh see the
    list. Replaces this file as the place ideas get captured; this file stays
@@ -60,9 +65,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 
 ## Next — the parked build
 
-**The calendar and the change log.** Agreed in principle, not started. The
-strongest item on the list, because everything financial gets more accurate
-and two later features depend on it.
+**The calendar and the change log.** The *reading* half is built and in the
+preview: the week picker, the theme, and cancellations, cover and one-offs
+applied to a coach's week. What is left is the financial half — using the
+same calendar so monthly figures stop assuming 4.33 weeks of everything, and
+the coach hours report that reads the same change log.
 
 - A `Calendar` tab: which weeks each session actually runs (half term, term
   dates), so monthly figures stop assuming 4.33 weeks of everything

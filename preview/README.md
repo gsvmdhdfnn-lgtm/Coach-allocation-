@@ -20,6 +20,7 @@ The live site opens straight into a coach dropdown. This one opens on a
 | Venues | The venue names on the Sessions tab, plus the optional **Venue info** tab |
 | Handbook | The optional **Info** tab |
 | Resources | The optional **Resources** tab |
+| The week picker | The optional **Calendar** and **Changes** tabs |
 | Financials | The Financials tab, behind the password — unchanged |
 
 Financials sits apart from the others in the nav, with a padlock, and is
@@ -59,6 +60,48 @@ An image hosted on joshevans.co.uk works as-is and is steadier.
 A card whose image fails to load drops the picture and keeps the card, so a
 moved or re-privatised file leaves something usable rather than a broken
 icon.
+
+## The week picker
+
+`My week` carries a dropdown: this week and the next three. Picking a week
+rebuilds it from the base schedule plus whatever the `Changes` tab says
+happened that week, and shows the week's theme from `Calendar`.
+
+**`Calendar`** — one row per week. `week_commencing` is the Monday.
+`running` set to `NO` closes the whole business (Christmas); a single
+school's half term is a `Changes` row instead, because it only affects them.
+`theme` is what the term poster says that week is about.
+
+**`Changes`** — the exceptions, and only the exceptions. `type` is
+`cancelled`, `cover` or `extra`. Fill in **one** target and leave the rest
+blank — whichever is filled in is what the row applies to:
+
+| target | applies to |
+| --- | --- |
+| `session_id` | just that session |
+| `venue` | everything at that place that week |
+| `client` | everything for that school that week |
+| `coach_out` | everything that coach was down for that week |
+
+So a coach away for a week is **one row**, not eight, and a school's half
+term is one row, not five. That is the whole design: a row nobody can be
+bothered to write is a week the hub gets confidently wrong, which is worse
+than a blank page — so the rows have to be cheap.
+
+For `extra`, fill in `day`, `time`, `venue`, `session_name` and put the coach
+in `coach_in`; there is no base session to point at.
+
+### What a coach sees
+
+- **Cancelled** — still listed, greyed and struck through, with the reason.
+  Vanishing reads as "deleted", and a coach who assumes that turns up anyway.
+- **Covered** — a session they have handed over stays on the list, faded,
+  saying who has it. It does not count towards their sessions for the week.
+- **Covering** — a session picked up from someone else, badged with whose.
+- **One-off** — an `extra`, badged so it is clearly not the usual.
+
+Without those two tabs there is no picker and no theme, and the schedule is
+the plain base week exactly as before.
 
 ## "Their own space" — coach codes
 

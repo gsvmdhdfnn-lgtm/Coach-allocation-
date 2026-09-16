@@ -47,6 +47,21 @@ window.APP_CONFIG = {
      Either, both or neither. */
   resourcesCsvUrl: "",
 
+  /* Published CSV URL for the "Calendar" tab — one row per week.
+     Columns: week_commencing, week_no, label, theme, running.
+     Optional: without it the schedule is the plain base week, with no
+     week picker and no theme. */
+  calendarCsvUrl: "",
+
+  /* Published CSV URL for the "Changes" tab — the exceptions, and only the
+     exceptions. Columns: week_commencing, session_id, venue, client,
+     coach_out, coach_in, type, day, time, session_name, note.
+     `type` is cancelled, cover or extra. Fill in whichever target applies:
+     a session_id for one session, a venue or client for everywhere at that
+     place, a coach_out for everything that coach was down for — so a week's
+     holiday is one row, not eight. */
+  changesCsvUrl: "",
+
   /* Produced by setup.html — do not hand-edit. */
   financials: {
     salt: "yv6jJJ/oYpXFI6bYLLGgkg==",

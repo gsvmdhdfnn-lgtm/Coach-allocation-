@@ -23,6 +23,51 @@
 
   /* The app puts a quiet line at the top of anything fed from here, so nobody
      mistakes sample wording for something the office actually wrote. */
+  /* ------------------------------------------------------------------
+     A sample calendar and change log, built relative to today so the
+     preview never goes stale. They are handed over as data: URLs, which
+     go through exactly the same CSV path as a published sheet tab - no
+     special case in the app for demo data.
+     ------------------------------------------------------------------ */
+  function monday(offsetWeeks) {
+    var d = new Date();
+    d.setHours(12, 0, 0, 0);                        // clear of DST edges
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7)  // back to Monday
+                          + offsetWeeks * 7);
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
+
+  function asCsv(text) {
+    return "data:text/csv;charset=utf-8," + encodeURIComponent(text);
+  }
+
+  if (!cfg.calendarCsvUrl) {
+    cfg.calendarCsvUrl = asCsv(
+      "week_commencing,week_no,label,theme,running\n" +
+      monday(0) + ",8,Term 1 Week 8,Jabs & Blocks,yes\n" +
+      monday(1) + ",9,Term 1 Week 9,Start Attacks,yes\n" +
+      monday(2) + ",10,Term 1 Week 10,Match & Mirror,yes\n" +
+      monday(3) + ",11,Term 1 Week 11,\"Hard to beat, move your feet\",yes\n");
+    used = true;
+  }
+
+  if (!cfg.changesCsvUrl) {
+    cfg.changesCsvUrl = asCsv(
+      "week_commencing,session_id,venue,coach_out,coach_in,type,day,time,session_name,note\n" +
+      /* one session off this week */
+      monday(0) + ",E14,,,,cancelled,,,,School hall booked for a concert\n" +
+      /* a coach away for a whole week - one row, every session of theirs */
+      monday(1) + ",,,Tom,Sam,cover,,,,Tom on holiday\n" +
+      /* a school's half term - one row, every session there */
+      monday(2) + ",,Daneshill,,,cancelled,,,,Their half term\n" +
+      /* something the school asked for as a one-off */
+      monday(3) + ",,Daneshill,,Tom,extra,Tuesday,1:00-2:00pm,Year 5 taster," +
+        "School asked for a one-off\n");
+    used = true;
+  }
+
   cfg.demoContent = used;
 
   /* ------------------------------------------------------------------
