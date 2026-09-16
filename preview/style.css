@@ -910,3 +910,57 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
   color: var(--ink-faint);
   font-size: .86rem;
 }
+
+/* ----------------------------- resources ----------------------------- */
+
+.rgrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /* Cards size to their own content - a one-line card next to a poster
+     should not be stretched into a tall empty box. */
+  align-items: start;
+}
+/* A term plan is landscape and full of small text, so it earns the width of
+   two text cards. Browsers without :has() just show it at one column. */
+@media (min-width: 700px) {
+  .rcard:has(.rcard-img) { grid-column: span 2; }
+}
+.rcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .16s, border-color .16s, transform .16s;
+}
+a.rcard:hover { border-color: var(--accent); box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .rcard { transition: none; }
+  a.rcard:hover { transform: none; }
+}
+
+/* The posters are dark artwork, so they sit on their own dark mat rather
+   than glowing against a white card. */
+.rcard-img {
+  background: #0e1512;
+  border-bottom: 1px solid var(--line);
+}
+.rcard-img img { display: block; width: 100%; height: auto; }
+
+.rcard-body { padding: 15px 17px 17px; }
+.rcard-body h4 { margin: 0 0 6px; font-size: 1rem; font-weight: 640; color: var(--ink); }
+.rcard-body p { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--ink-soft); }
+.rcard-go {
+  display: inline-block;
+  margin-top: 11px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.rcard-go::after { content: " →"; }

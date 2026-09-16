@@ -54,10 +54,15 @@
     handbook:    document.getElementById("handbook"),
     handbookBody:document.getElementById("handbook-body"),
     navHandbook: document.getElementById("nav-handbook"),
+    resources:   document.getElementById("resources"),
+    resourceBody:document.getElementById("resource-body"),
+    navResources:document.getElementById("nav-resources"),
     venueInfo:   null,   // venue key -> row from the Venue info tab, once fetched
     venueAliases:null,   // another spelling -> the name to show it under
     info:        null,   // rows from the Info tab, once fetched
-    infoError:   null
+    infoError:   null,
+    res:         null,   // rows from the Resources tab, once fetched
+    resError:    null
   };
 
   /* ====================================================================== *
@@ -380,6 +385,7 @@
     el.status.hidden = true;
     if (fv && fv.nav) fv.nav.hidden = false;
     if (hub.navHandbook) hub.navHandbook.hidden = !hasTab(CFG.infoCsvUrl);
+    if (hub.navResources) hub.navResources.hidden = !hasTab(CFG.resourcesCsvUrl);
 
     var wanted = coachFromHash();
     if (wanted) {
@@ -1626,6 +1632,7 @@
     schedule: '<rect x="2.5" y="4" width="15" height="13.5" rx="2.5"/><path d="M2.5 8.5h15M6.5 2.5v3M13.5 2.5v3"/>',
     venues:   '<path d="M10 17.5s6-5.1 6-9.2a6 6 0 10-12 0c0 4.1 6 9.2 6 9.2z"/><circle cx="10" cy="8.2" r="2.2"/>',
     handbook: '<path d="M4 3.5h8.5a2.5 2.5 0 012.5 2.5v10.5H6.5A2.5 2.5 0 014 14z"/><path d="M4 14a2.5 2.5 0 012.5-2.5H15"/>',
+    resources: '<rect x="2.5" y="4" width="15" height="12" rx="2.5"/><path d="M2.5 12.5l4-3.5 3.5 3 3-2.5 4 3.5"/><circle cx="7" cy="7.5" r="1.2"/>',
     financials: '<path d="M6 8.5V6a4 4 0 018 0v2.5"/><rect x="3.8" y="8.5" width="12.4" height="8" rx="2"/>'
   };
 
@@ -1637,6 +1644,9 @@
     { view: "handbook", title: "Handbook",
       blurb: "Kit, absence, who to call — the things worth knowing.",
       needs: function () { return hasTab(CFG.infoCsvUrl); } },
+    { view: "resources", title: "Resources",
+      blurb: "Term plans, session themes and anything else worth having on your phone.",
+      needs: function () { return hasTab(CFG.resourcesCsvUrl); } },
     { view: "financials", title: "Financials", owner: true,
       blurb: "Revenue, cost and profit by programme, session and coach. Password needed." }
   ];
@@ -1928,9 +1938,101 @@
     });
   }
 
+  /* ----------------------------- resources ----------------------------- */
+
+  function ensureResources() {
+    if (hub.res) return Promise.resolve();
+    if (!hasTab(CFG.resourcesCsvUrl)) { hub.res = []; return Promise.resolve(); }
+    return fetchCsv(CFG.resourcesCsvUrl, "Resources").then(function (rows) {
+      hub.res = toObjects(rows, ["title"], "Resources");
+    }).catch(function (e) {
+      hub.res = [];
+      hub.resError = e;
+    });
+  }
+
+  function resourceCard(r) {
+    var link = String(r.url || "").trim();
+    var img  = String(r.image_url || "").trim();
+    var href = link || img;
+
+    /* A card with somewhere to go is a link; one without is just a card. */
+    var card = mk(href ? "a" : "div", "rcard");
+    if (href) {
+      card.href = href;
+      if (/^https?:/i.test(href)) { card.target = "_blank"; card.rel = "noopener"; }
+    }
+
+    if (img) {
+      var fig = mk("div", "rcard-img");
+      var im = mk("img");
+      im.src = img;
+      im.alt = String(r.title || "");
+      im.loading = "lazy";
+      /* A link to an image that has moved or gone private should leave a
+         usable card behind, not a broken icon. */
+      im.addEventListener("error", function () { fig.remove(); });
+      fig.appendChild(im);
+      card.appendChild(fig);
+    }
+
+    var body = mk("div", "rcard-body");
+    body.appendChild(mk("h4", null, String(r.title || "").trim()));
+    var desc = String(r.description || "").trim();
+    if (desc) body.appendChild(mk("p", null, desc));
+    if (link) body.appendChild(mk("span", "rcard-go", "Open"));
+    card.appendChild(body);
+    return card;
+  }
+
+  function renderResources() {
+    hub.resourceBody.innerHTML = "";
+    demoNote(hub.resourceBody, "resources");
+
+    if (hub.resError) {
+      var warn = mk("div", "notice is-error");
+      warn.appendChild(mk("h2", null, "The resources could not be loaded"));
+      warn.appendChild(mk("p", null, hub.resError.message || String(hub.resError)));
+      hub.resourceBody.appendChild(warn);
+      return;
+    }
+    if (!hub.res || !hub.res.length) {
+      hub.resourceBody.appendChild(mk("p", "empty",
+        "Nothing here yet. Add rows to the Resources tab of the sheet."));
+      return;
+    }
+
+    var order = [], bySection = Object.create(null);
+    hub.res.forEach(function (r) {
+      if (!String(r.title || "").trim()) return;
+      var sec = String(r.section || "General").trim() || "General";
+      if (!bySection[sec]) { bySection[sec] = []; order.push(sec); }
+      bySection[sec].push(r);
+    });
+
+    order.forEach(function (sec) {
+      var rows = bySection[sec].slice().sort(function (a, b) {
+        return (num(a.order) || 0) - (num(b.order) || 0);
+      });
+      var group = mk("section", "hb-group");
+      group.appendChild(mk("h3", "hb-section", sec));
+      var grid = mk("div", "rgrid");
+      rows.forEach(function (r) { grid.appendChild(resourceCard(r)); });
+      group.appendChild(grid);
+      hub.resourceBody.appendChild(group);
+    });
+  }
+
+  function showResources() {
+    hub.resources.hidden = false;
+    ensureResources().then(function () {
+      if (state.view === "resources") renderResources();
+    });
+  }
+
   /* ------------------------------ views ------------------------------ */
 
-  var VIEWS = { home:1, schedule:1, venues:1, handbook:1, financials:1 };
+  var VIEWS = { home:1, schedule:1, venues:1, handbook:1, resources:1, financials:1 };
 
   /** Which section a link is asking for. Old #coach=... links still work. */
   function viewFromHash() {
@@ -1970,6 +2072,7 @@
     hub.home.hidden = true;
     hub.venues.hidden = true;
     hub.handbook.hidden = true;
+    hub.resources.hidden = true;
     el.picker.hidden = true;
     el.results.hidden = true;
     el.status.hidden = true;
@@ -1978,6 +2081,7 @@
     if (name === "home")            { renderHome(); hub.home.hidden = false; }
     else if (name === "venues")     { showVenues(); }
     else if (name === "handbook")   { showHandbook(); }
+    else if (name === "resources")  { showResources(); }
     else if (name === "financials") { renderFinView(); fv.view.hidden = false; }
     else                            { showSchedule(); }
 

@@ -26,7 +26,10 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Venues section, built from the schedule
 - Handbook section, driven from an `Info` tab
 - Venue aliasing, so one place named twice on the schedule is one card
-- Sample handbook and venue text so the empty sections can be judged
+- Resources section — term plans and session posters as image cards, plus
+  links out to forms and the website
+- Sample handbook, venue and resource content so the empty sections can be
+  judged
 
 ## Next — tomorrow, at the laptop
 
@@ -37,7 +40,11 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
    (without them, Directions is a name search and is weak for the
    single-word venues like Milbourne and Parkside)
 5. **Decide whether to promote the preview** over the live site
-6. **Add an `Ideas` tab** and show it in the hub behind the Financials
+6. **Fill in the `Resources` tab** — the term posters. Needs somewhere the
+   images can be loaded from directly; a plain Drive sharing link will not
+   do it (the script's note on the `image_url` header explains the
+   workaround).
+7. **Add an `Ideas` tab** and show it in the hub behind the Financials
    password — agreed. Same pattern as the Handbook, just gated, so David can
    add a row from his phone in the Sheets app and both he and Josh see the
    list. Replaces this file as the place ideas get captured; this file stays
@@ -57,6 +64,14 @@ and two later features depend on it.
 
 The principle we settled on: **log the exceptions, not everything.** There is
 a base schedule and it is mostly right.
+
+## Ideas worth coming back to
+
+- **"This week's theme" on the home page.** The term posters carry dates —
+  week 9 is w/c 9th November, and so on. Once the calendar tab exists, the
+  hub could open with "Week 9 — Start Attacks" rather than a generic
+  welcome. That is the kind of thing that makes people open it on a Tuesday
+  night, and it costs nothing extra once the dates are in the sheet.
 
 ## After that, in order
 

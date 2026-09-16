@@ -40,6 +40,13 @@ window.APP_CONFIG = {
      Columns: section, order, title, body. */
   infoCsvUrl: "",
 
+  /* Published CSV URL for the "Resources" tab. Public — safe to share.
+     Optional: while this is empty the Resources section is hidden entirely.
+     Columns: section, order, title, description, url, image_url.
+     `url` is what the card opens; `image_url` shows a picture on the card.
+     Either, both or neither. */
+  resourcesCsvUrl: "",
+
   /* Produced by setup.html — do not hand-edit. */
   financials: {
     salt: "yv6jJJ/oYpXFI6bYLLGgkg==",

@@ -19,6 +19,7 @@ The live site opens straight into a coach dropdown. This one opens on a
 | Schedule | Sessions + Coaches tabs — unchanged from the live site |
 | Venues | The venue names on the Sessions tab, plus the optional **Venue info** tab |
 | Handbook | The optional **Info** tab |
+| Resources | The optional **Resources** tab |
 | Financials | The Financials tab, behind the password — unchanged |
 
 Financials sits apart from the others in the nav, with a padlock, and is
@@ -37,8 +38,27 @@ nobody ever sees an empty page.
    starter rows to edit, and a `Venue info` tab pre-filled with every venue
    already on the schedule.
 2. **File → Share → Publish to web**, publish each tab as CSV.
-3. Paste the two links into `../config.js` as `infoCsvUrl` and
-   `venueInfoCsvUrl`.
+3. Paste the links into `../config.js` as `infoCsvUrl`, `venueInfoCsvUrl`
+   and `resourcesCsvUrl`.
+
+### What the Resources tab looks like
+
+| section | order | title | description | url | image_url |
+| --- | --- | --- | --- | --- | --- |
+| Session plans | 1 | Second Half, weeks 8–14 | The theme each week. | | …/poster.jpg |
+
+`url` is what the card opens when tapped; `image_url` puts a picture on it.
+Either, both or neither — a row with no link is still a readable card.
+
+For a picture to show, `image_url` has to be something a browser can load
+directly. **A normal Google Drive sharing link will not work.** If the file
+is in Drive and set to "Anyone with the link", take the ID out of the
+sharing link and use `https://drive.google.com/thumbnail?id=THE_ID&sz=w1200`.
+An image hosted on joshevans.co.uk works as-is and is steadier.
+
+A card whose image fails to load drops the picture and keeps the card, so a
+moved or re-privatised file leaves something usable rather than a broken
+icon.
 
 ### One place, two names on the schedule
 
