@@ -568,6 +568,7 @@
     state.me = null;
     state.selected = null;
     el.input.value = "";
+    applyIdentity();      // nav label and the financial button come back too
     setView("home");
   }
 
@@ -699,6 +700,23 @@
 
     if (state.me && !state.me.owner) state.selected = state.me.coach;
     var view = viewFromHash() || (state.selected ? "schedule" : "home");
+
+    /* Someone who followed a link with a code in it expected to land on their
+       own week. Dropping them on the whole team's, with the explanation in a
+       box below the tiles, reads as "the site is broken" - which, from their
+       side, it is. */
+    if (hub.badCode) {
+      setView("home", { silent: true });
+      notice("That link did not work",
+        "<p>The code in the link was not recognised, so this is the whole " +
+        "team's schedule rather than yours.</p>" +
+        "<p>If the link is one you have used before, your phone may be " +
+        "holding an old copy of the page — pull down to refresh and try " +
+        "again. Otherwise ask David for a new link.</p>", true);
+      el.status.hidden = false;
+      return;
+    }
+
     if (view === "financials" && !state.financials) {
       setView("home", { silent: true });
       askPassword().then(function (ok) { if (ok) setView("financials"); });
