@@ -34,7 +34,10 @@
      These are throwaway. The real ones get generated into the sheet and
      the app reads them from there instead.
      ------------------------------------------------------------------ */
-  if (!cfg.coachCodes) {
+  /* An empty object is still an object, so test for emptiness, not presence -
+     config.js ships `coachCodes: {}` and that must not count as "already
+     set". Same for the URLs above, which are empty strings and so falsy. */
+  if (!cfg.coachCodes || !Object.keys(cfg.coachCodes).length) {
     cfg.coachCodes = {
       "David":  { code: "H4RN7Q", owner: true },
       "Josh":   { code: "T8MKW3", owner: true },
