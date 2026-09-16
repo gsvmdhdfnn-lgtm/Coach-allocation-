@@ -19,12 +19,12 @@
 window.APP_CONFIG = {
 
   /* Published CSV URL for the "Sessions" tab. Public — safe to share. */
-  sessionsCsvUrl: "PASTE_SESSIONS_CSV_URL_HERE",
+  sessionsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=349419235&single=true&output=csv",
 
   /* Published CSV URL for the "Coaches" tab. Public — safe to share.
      Optional: leave as-is and the app builds the coach list from the
      sessions alone (you just lose the alias column and the rates). */
-  coachesCsvUrl: "PASTE_COACHES_CSV_URL_HERE",
+  coachesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=11015794&single=true&output=csv",
 
   /* Produced by setup.html — do not hand-edit. */
   financials: null,
