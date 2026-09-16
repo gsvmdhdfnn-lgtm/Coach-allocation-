@@ -15,6 +15,7 @@ the Google Sheet, nothing else**.
 | `app.js` | Fetching, filtering, rendering, the password gate |
 | `config.js` | **The only file you edit.** Sheet links, password, aliases |
 | `setup.html` | Run once to switch on the financial layer |
+| `je-logo.png` | The Josh Evans Soccer School logo in the header |
 
 ---
 
@@ -146,6 +147,16 @@ server behind it, so anything the page can read, a visitor can read too. That
 shapes the section below.
 
 ---
+
+## Replacing the logo
+
+Drop a new `je-logo.png` in beside the others, keeping the name. The header
+sizes it by height, so any width works.
+
+It sits on a white bar in both light and dark mode, deliberately: the artwork
+is navy-on-white, and on the brand blue the wordmark all but disappears. If you
+ever get a white or knocked-out version, the bar can become blue instead -
+change `background: #ffffff` on `.masthead` in `style.css`.
 
 ## How safe is the password, really?
 
