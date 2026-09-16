@@ -52,14 +52,44 @@ school ones.
 
 ### Financials
 
-One row per session, keyed by `session_id`.
+One row per session, keyed by `session_id`. The tab calculates: the money
+columns are formulas, and only the shaded columns are typed in. Google
+publishes the calculated values rather than the formulas, so the site just
+sees numbers.
+
+The site reads these, by heading rather than position:
 
 `session_id` · `participants` · `price_per_participant` · `revenue_gross` ·
 `revenue_net` · `coach_cost` · `venue_cost` · `profit` · `period`
 
+Alongside them the tab carries `session_name`, `day`, `time`, `venue` and
+`coaches`, looked up live from the Sessions tab so a row is readable without
+cross-referencing, plus the inputs the formulas work from. The site ignores
+every column it does not recognise, so extra ones are free.
+
+**What you type in:**
+
+| Column | |
+| --- | --- |
+| `participants`, `price_per_participant` | any session with children in it |
+| `rate`, `units` | the eleven schools billed per coach hour (D01-D09, D26, D27), where `rate` is GBP per coach hour and `units` is billable hours |
+| `venue_cost` | negotiated per session, so not derivable from a rate |
+| `coach_groups` | how many classes share the coaches and venue in that slot |
+| `coach_rate_total` | the coaches' combined hourly rate for that session |
+
+**What calculates itself:** revenue gross and net (VAT handled per the `vat`
+column — `inclusive` for evening and per-player schools, `added` for
+per-coach-hour ones), coach cost (`coach_rate_total` × hours ÷ `coach_groups`,
+converted to monthly for evening rows), and profit.
+
+So dropping a class from a shared slot means changing `coach_groups` on the
+others, and the cost re-splits across them on its own.
+
 `period` is `monthly` for evening sessions and `weekly` for school ones,
 because that is how the two programmes are actually billed. The app prints the
-period on every card and never adds the two together.
+period on every card and never adds the two together. The TOTAL row at the
+bottom of the tab sums both together, so treat it as a checksum rather than a
+business figure.
 
 ### Coaches
 
@@ -201,8 +231,14 @@ from a static page.
 
 **Adding or changing a session** — edit the `Sessions` tab. A new session needs
 a `session_id` nobody else is using. If you want figures on it too, add a row to
-`Financials` with the same `session_id`; without one, the card opens and says so
-rather than showing blanks.
+`Financials` with the same `session_id` — copy an existing row of a similar
+session and paste it, so the formulas come with it, then change the id and the
+inputs. Typing into a blank row leaves empty cells where the calculations
+should be. Without a Financials row at all, the card opens and says so rather
+than showing blanks.
+
+**Changing participant numbers** — the `participants` column on `Financials`.
+Revenue and profit follow, and the site picks it up within a few minutes.
 
 **A coach not appearing** — check the spelling in the `coaches` column. A name
 spelled differently is treated as a different person, which is exactly what the
