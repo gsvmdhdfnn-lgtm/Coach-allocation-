@@ -20,7 +20,7 @@ The live site opens straight into a coach dropdown. This one opens on a
 | Venues | The venue names on the Sessions tab, plus the optional **Venue info** tab |
 | Handbook | The optional **Info** tab |
 | Resources | The optional **Resources** tab |
-| The week picker | The optional **Calendar** and **Changes** tabs |
+| The week picker | The optional **Calendar**, **Changes** and **Terms** tabs |
 | Financials | The Financials tab, behind the password — unchanged |
 
 Financials sits apart from the others in the nav, with a padlock, and is
@@ -116,6 +116,52 @@ stripe does that job instead. They stay on the list (vanishing reads as
 
 Without those two tabs there is no picker and no theme, and the schedule is
 the plain base week exactly as before.
+
+## Two schools, two calendars — the Terms tab
+
+`Changes` is for a one-off deviation from a school that is normally on.
+It is the wrong tool for a school whose term simply runs a different span of
+weeks every year — St Peter's back on the 8th, Dane's Hill not until the
+15th. Logging that through Changes would mean a fresh *cancelled* row for
+Dane's Hill every single week until its term starts: exactly the "nobody
+will keep that up" trap Changes exists to avoid, because a change that isn't
+logged is a schedule that's confidently wrong.
+
+**`Terms`** is a smaller, separate idea: one row per school, a date range.
+
+| school | starts | ends | note |
+| --- | --- | --- | --- |
+| Dane's Hill | 2026-09-22 | | Starts a week later this term |
+
+`school` matches a session's `client` column, or its `venue` when `client`
+is blank — the normal case for a day school, where the venue and the school
+are the same thing. A blank `ends` means the term is still going. **A school
+with no row is not restricted at all** — it runs whenever the base schedule
+already says, exactly as today. Most schools will never need a row.
+
+### What a coach sees
+
+A session outside its school's term does not appear as a card — there is
+nothing to cancel, because it was never part of that week's plan. Instead,
+one quiet line appears under the coach's summary:
+
+> Not running this week: Daneshill — starts 21 Sep
+
+Deliberately **not** a banner. Cancelled and covered are alarms — something
+that would normally happen isn't, and the coach needs to know why. A school
+not yet in term is not an alarm; it is simply not part of the plan yet, the
+same as any other week without a Tuesday session. Once the date passes, the
+session reappears on its own — no row to remember to remove.
+
+### Where this is going
+
+The financial figures currently assume every session runs 4.3333 weeks a
+month, every month. Once `Terms` exists, that stops being a flat assumption
+and becomes actual weeks — a school that runs 34 weeks a year gets costed
+as 34 weeks, not 52. The coach hours report reads the same tab: hours for a
+week a school's term did not cover are not counted, because the session
+never happened. Neither is built yet; `Terms` is the piece both will read
+once they are.
 
 ## "Their own space" — coach codes
 

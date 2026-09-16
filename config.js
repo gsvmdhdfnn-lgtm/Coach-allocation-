@@ -62,6 +62,16 @@ window.APP_CONFIG = {
      holiday is one row, not eight. */
   changesCsvUrl: "",
 
+  /* Published CSV URL for the "Terms" tab — which weeks each school's term
+     actually runs. Columns: school, starts, ends, note.
+     This is NOT for a one-off cancellation (that is Changes) — it is for a
+     school whose term runs a genuinely different span of weeks, every year,
+     as a matter of their own contract or calendar. `school` matches a
+     session's `client` column, or its `venue` when `client` is blank.
+     No row for a school means no restriction — it runs whenever the base
+     schedule says. Optional: without it nothing changes. */
+  termsCsvUrl: "",
+
   /* Produced by setup.html — do not hand-edit. */
   financials: {
     salt: "yv6jJJ/oYpXFI6bYLLGgkg==",

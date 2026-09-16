@@ -25,6 +25,7 @@
     view: "home",
     calendar: null,      // "YYYY-MM-DD" (a Monday) -> { weekNo, label, theme, running }
     changes: null,       // the exceptions log, as rows
+    terms: null,         // per-school term windows, as rows
     week: null,          // the Monday currently being shown
     codes: null,         // CODE -> { name, owner }
     me: null             // whoever is signed in, if anyone
@@ -357,8 +358,57 @@
     return isNaN(d.getTime()) ? null : d;
   }
 
+  /**
+   * Whether a school runs at all this week is not an exception - it is the
+   * plan, and a different one per school. St Peter's and Dane's Hill can
+   * both be "normal" and still not agree, because their terms do not start
+   * on the same date. Putting that through Changes would mean a fresh
+   * cancelled row for Dane's Hill every single week until its term starts -
+   * exactly the "nobody will keep that up" trap the Changes tab exists to
+   * avoid.
+   *
+   * So this is a separate, smaller idea: a date range per school. A session
+   * belongs to a school by its `client` column, or its `venue` when client
+   * is blank (a day session's venue usually IS the school). No row for a
+   * school -> no restriction, it runs whenever the base schedule says.
+   */
+  function loadTerms() {
+    if (!hasTab(CFG.termsCsvUrl)) { state.terms = []; return Promise.resolve(); }
+    return fetchCsv(CFG.termsCsvUrl, "Terms").then(function (rows) {
+      state.terms = toObjects(rows, ["school"], "Terms").map(function (r) {
+        return {
+          key: nameKey(r.school),
+          school: String(r.school || "").trim(),
+          starts: parseDay(r.starts),
+          ends: parseDay(r.ends),
+          note: String(r.note || "").trim()
+        };
+      }).filter(function (t) { return t.key; });
+    }).catch(function (e) {
+      console.warn("Terms could not be loaded:", e);
+      state.terms = [];
+    });
+  }
+
+  function termFor(s) {
+    if (!state.terms || !state.terms.length) return null;
+    var key = nameKey(s.client || s.venue || "");
+    return state.terms.filter(function (t) { return t.key === key; })[0] || null;
+  }
+
+  /** Does this school's term cover the Monday of this week? No dates on the
+      row at all means "always" - a start with no end means "still going". */
+  function inTerm(term, mondayIso) {
+    if (!term) return true;
+    var d = parseDay(mondayIso);
+    if (term.starts && d < mondayOf(term.starts)) return false;
+    if (term.ends && d > mondayOf(term.ends)) return false;
+    return true;
+  }
+
   function loadWeekData() {
     var jobs = [
+      loadTerms(),
       hasTab(CFG.calendarCsvUrl)
         ? fetchCsv(CFG.calendarCsvUrl, "Calendar").then(function (rows) {
             var map = Object.create(null);
@@ -426,6 +476,12 @@
     return out;
   }
 
+  function shortDate(d) {
+    return d.getDate() + " " +
+      ["Jan","Feb","Mar","Apr","May","Jun",
+       "Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+  }
+
   function weekLabel(w) {
     var wc = "w/c " + w.date.getDate() + " " +
       ["Jan","Feb","Mar","Apr","May","Jun",
@@ -457,8 +513,17 @@
   function weekFor(coach, iso) {
     var chs = changesForWeek(iso);
     var mine = [];
+    var outOfTerm = [];   // their own sessions that simply are not on yet/still
 
     state.sessions.forEach(function (s) {
+      var onBase = s.coaches.some(function (c) { return nameKey(c) === nameKey(coach.name); });
+
+      var term = termFor(s);
+      if (term && !inTerm(term, iso)) {
+        if (onBase) outOfTerm.push({ session: s, term: term });
+        return;   // not part of the plan this week - nothing to cancel or cover
+      }
+
       var coaches = s.coaches.slice();
       var cancelled = null, coveredBy = null, coveringFor = null;
 
@@ -507,7 +572,7 @@
       });
     });
 
-    return mine;
+    return { items: mine, outOfTerm: outOfTerm };
   }
 
   /* ====================================================================== *
@@ -805,11 +870,11 @@
     el.results.hidden = false;
 
     /* Without a calendar this is still the plain base schedule. */
-    var items = state.week
-      ? weekFor(coach, state.week)
-      : coach.sessions.map(function (s) {
-          return { session: s, coaches: s.coaches, status: "on", note: "" };
-        });
+    var week = state.week ? weekFor(coach, state.week) : null;
+    var items = week ? week.items : coach.sessions.map(function (s) {
+      return { session: s, coaches: s.coaches, status: "on", note: "" };
+    });
+    var outOfTerm = week ? week.outOfTerm : [];
 
     /* What they are actually working, which is not the same as what is on
        the base schedule: a session handed to someone else is not theirs. */
@@ -841,6 +906,20 @@
     meta.textContent = bits.join(" · ");
     el.summary.appendChild(h2);
     el.summary.appendChild(meta);
+
+    if (outOfTerm.length) {
+      var termNote = mk("p", "term-note");
+      outOfTerm.forEach(function (o, i) {
+        if (i) termNote.appendChild(document.createTextNode(" · "));
+        var label = o.session.name || o.session.venue;
+        var when = o.term.starts && mondayOf(new Date()) < mondayOf(o.term.starts)
+          ? "starts " + shortDate(o.term.starts)
+          : o.term.ends ? "ended " + shortDate(o.term.ends) : "not on this week";
+        termNote.appendChild(document.createTextNode(
+          "Not running this week: " + label + " — " + when));
+      });
+      el.summary.appendChild(termNote);
+    }
 
     if (!items.length) {
       var none = document.createElement("p");

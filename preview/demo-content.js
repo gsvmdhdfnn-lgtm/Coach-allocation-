@@ -53,6 +53,19 @@
     used = true;
   }
 
+  if (!cfg.termsCsvUrl) {
+    /* The exact scenario David described: two schools, same term, different
+       start dates. St Peter's runs from this week; Daneshill (his Dane's
+       Hill) does not start until next week, so Tom's Wednesday session
+       there simply does not appear this week - and reappears on its own
+       once the date is reached, no row to remember to remove. */
+    cfg.termsCsvUrl = asCsv(
+      "school,starts,ends,note\n" +
+      "St Peters," + monday(0) + "," + monday(20) + ",\n" +
+      "Daneshill," + monday(1) + "," + monday(20) + ",Starts a week later this term\n");
+    used = true;
+  }
+
   if (!cfg.changesCsvUrl) {
     cfg.changesCsvUrl = asCsv(
       "week_commencing,session_id,venue,coach_out,coach_in,type,day,time,session_name,note\n" +

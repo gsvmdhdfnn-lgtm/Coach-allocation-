@@ -1089,3 +1089,11 @@ a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .card.is-cover       { border-left: 4px solid var(--brand-lime); }
 .card.is-extra       { border-left: 4px solid var(--accent); }
 .card.is-off         { border-left: 4px solid var(--negative); }
+
+/* A school not being on this week is not an alarm - it is the plan, same as
+   any other week that does not have a Tuesday session. Text, not a banner. */
+.term-note {
+  margin: 8px 0 0;
+  font-size: .87rem;
+  color: var(--ink-faint);
+}

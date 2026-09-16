@@ -35,6 +35,12 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 - Week picker on "My week" — this week plus three, with the week's theme,
   and cancellations, cover and one-offs applied from a `Changes` tab.
   3 weeks ahead and cancellations stay visible, both David's call.
+- `Terms` tab — a school whose term genuinely runs a different span of
+  weeks (not a one-off, the plan every year). A session outside its
+  school's term does not show as a card; one quiet line says why, not a
+  banner. Separate from `Changes` on purpose: typing a cancelled row for
+  Dane's Hill every week until its term starts is exactly the "nobody
+  keeps that up" trap the Changes tab was built to avoid.
 - Status banners across the top of a card — red *Cancelled*, amber *Sam is
   covering · You are not needed*, lime *Covering for Tom*, blue *One-off*.
   Signed off: "they all look great". The headline carries the fact, not the
@@ -62,6 +68,8 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
    `#me=THEIRCODE`.
 8. **Fill in `Calendar` and `Changes`** — the script creates both with the
    next twelve weeks seeded and three example rows to delete.
+   Also creates **`Terms`** — leave it empty unless a specific school's term
+   genuinely differs from the rest; most schools will never need a row.
 9. **Add an `Ideas` tab** and show it in the hub behind the Financials
    password — agreed. Same pattern as the Handbook, just gated, so David can
    add a row from his phone in the Sheets app and both he and Josh see the
@@ -71,10 +79,13 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 ## Next — the parked build
 
 **The calendar and the change log.** The *reading* half is built and in the
-preview: the week picker, the theme, and cancellations, cover and one-offs
-applied to a coach's week. What is left is the financial half — using the
-same calendar so monthly figures stop assuming 4.33 weeks of everything, and
-the coach hours report that reads the same change log.
+preview: the week picker, the theme, cancellations/cover/one-offs from
+`Changes`, and per-school term windows from `Terms` (St Peter's on from the
+8th, Dane's Hill not until the 15th — genuinely different plans, not an
+exception either side). What is left is the financial half — using
+`Calendar` and `Terms` together so monthly figures stop assuming 4.33 weeks
+of everything a school never actually ran, and the coach hours report that
+reads the same two tabs to only count weeks a session genuinely happened.
 
 - A `Calendar` tab: which weeks each session actually runs (half term, term
   dates), so monthly figures stop assuming 4.33 weeks of everything
