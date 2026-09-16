@@ -28,9 +28,9 @@ window.APP_CONFIG = {
 
   /* Produced by setup.html — do not hand-edit. */
   financials: {
-    salt: "e0hzx56TC+pbdY3T9LXQXQ==",
-    iv: "ZCBeRfNgopzRc6XY",
-    ciphertext: "G469yQIL7MxxpveyqnsCpSJWaeIwJ47Y/b0hrBay6n+Cm8aDowBJaChGWVpIIpZ5oNXAdFZiAw/5wyaM54NBAqq8FRf571ZhCtyCyZ8A/kcrHtS9yQTHvSLF9VRxp44YoOH6w6hxJoNfQ8lnDrkMqd+tfdmzVmgPjjIqait5YVGi7b4jZNBhGnZz3x2dwNuLCN5DJw3P5YBJ3eIg8EAu7/MGtiZzVcGWVs6i+P4mpVDW1r/Ww/qeaJk=",
+    salt: "yv6jJJ/oYpXFI6bYLLGgkg==",
+    iv: "IkdOz5YMPEJIfgFY",
+    ciphertext: "T9T5AZO/+4ub7ksTRH7zoI1dMtKWr+LskZqXojhBQ0cBv9CT2/bU1Idtag0Drm0nUX7UeI21lQrUaLvej9ZQhVj/Z7UG8+DUtwUuN5FcWRIEMeGNHRp2WbELmf+i9+qzkAuZaCSlBMxXlqaQlxA3t40CvJMlInABkcmgVnHvYiYIBZx+cmSfXqn5yEF+zJQq+hwjxnrOmDQ8gscvM4N/rzWCCL7xLtDniBsqBjLvoTJJ/b/bs8Znk8c=",
     iterations: 250000
   },
 
