@@ -932,7 +932,7 @@
     nav:    document.getElementById("views"),
     view:   document.getElementById("finview"),
     cards:  document.getElementById("head-cards"),
-    select: document.getElementById("fin-select"),
+    picks:  document.getElementById("fin-pickers"),
     detail: document.getElementById("fin-detail"),
     basis:  "monthly",
     nodes:  {},
@@ -965,11 +965,16 @@
 
   function isDay(s) { return /^day$/i.test(s.programme); }
 
-  /** Everything -> programme -> category or school -> session. */
+  /**
+   * Everything -> programme -> category or school -> session name -> the
+   * individual session. The name level matters: 'Pre Academy U8' runs twice
+   * a week and the two are not alike, so they roll up and then split.
+   */
   function buildTree() {
     var root = { key: "all", label: "Everything", level: 0,
                  sessions: state.sessions.slice(), children: [] };
     var progs = {};
+
     state.sessions.forEach(function (s) {
       var pLabel = isDay(s) ? "Day programme" : "Evening programme";
       var gLabel = isDay(s) ? (s.client || s.venue || "Unknown")
@@ -981,44 +986,129 @@
         root.children.push(p);
       }
       p.sessions.push(s);
+
       var g = p.groups[gLabel];
       if (!g) {
         g = p.groups[gLabel] = { key: "g:" + pLabel + ":" + gLabel, label: gLabel,
-                                 level: 2, sessions: [], children: [] };
+                                 level: 2, sessions: [], children: [], names: {} };
         p.children.push(g);
       }
       g.sessions.push(s);
-      g.children.push({ key: "s:" + s.id, label: s.name, level: 3,
-                        sessions: [s], children: [], session: s });
+
+      var nLabel = s.name || gLabel;
+      var nm = g.names[nLabel];
+      if (!nm) {
+        nm = g.names[nLabel] = { key: "n:" + g.key + ":" + nLabel, label: nLabel,
+                                 level: 3, sessions: [], children: [] };
+        g.children.push(nm);
+      }
+      nm.sessions.push(s);
+      nm.children.push({ key: "s:" + s.id, label: s.day + " " + s.time,
+                         level: 4, sessions: [s], children: [], session: s });
     });
 
-    // Biggest earner first, at every level.
+    // Tidy the levels that would say nothing.
+    root.children.forEach(function (p) {
+      p.children.forEach(function (g) {
+        // A school whose every session is named after it: skip the name step.
+        if (g.children.length === 1 && g.children[0].label === g.label) {
+          g.children = g.children[0].children;
+        }
+        // One occurrence of a name is just that session.
+        g.children.forEach(function (nm) {
+          if (nm.children.length === 1 && !nm.session) {
+            nm.session = nm.children[0].session;
+            nm.children = [];
+          }
+        });
+      });
+    });
+
     (function rank(node) {
       node.children.sort(function (a, b) {
         return agg(b.sessions).monthly.profit - agg(a.sessions).monthly.profit;
       });
-      node.children.forEach(rank);
+      node.children.forEach(function (c) { c.parent = node; rank(c); });
     })(root);
 
     fv.nodes = {};
     (function index(n) { fv.nodes[n.key] = n; n.children.forEach(index); })(root);
+    fv.root = root;
     return root;
   }
 
-  function fillSelect(root) {
-    fv.select.innerHTML = "";
-    (function walk(n) {
-      var o = document.createElement("option");
-      o.value = n.key;
-      // Day sessions are named after the school, so several read alike -
-      // the day and time are what tell them apart.
-      var label = n.label;
-      if (n.session) label += " · " + n.session.day.slice(0, 3) + " " + n.session.time;
-      o.textContent = (n.level ? Array(n.level * 3 + 1).join(" ") : "") +
-                      (n.level === 3 ? "· " : "") + label;
-      fv.select.appendChild(o);
-      n.children.forEach(walk);
-    })(root);
+  /** Walk up from a node to the root. */
+  function chain(node) {
+    var out = [];
+    for (var n = node; n; n = n.parent) out.unshift(n);
+    return out;
+  }
+
+  function option(value, label, selected) {
+    var o = document.createElement("option");
+    o.value = value; o.textContent = label;
+    if (selected) o.selected = true;
+    return o;
+  }
+
+  function step(labelText, build) {
+    var wrap = document.createElement("div");
+    wrap.className = "fin-step";
+    var lab = document.createElement("label");
+    lab.className = "picker-label";
+    var sel = document.createElement("select");
+    sel.className = "fin-select";
+    sel.id = "step-" + labelText.toLowerCase().replace(/[^a-z]+/g, "-");
+    lab.setAttribute("for", sel.id);
+    lab.textContent = labelText;
+    build(sel);
+    wrap.appendChild(lab); wrap.appendChild(sel);
+    return wrap;
+  }
+
+  /** One dropdown per level that has somewhere further to go. */
+  function renderPickers(node) {
+    fv.picks.innerHTML = "";
+    var path = chain(node);
+    var grp  = path[2] || null;     // category or school
+    var name = path[3] || null;     // session name
+    var leaf = path[4] || null;     // the individual session
+
+    fv.picks.appendChild(step("Programme or group", function (sel) {
+      sel.appendChild(option("all", "Everything", node.key === "all"));
+      fv.root.children.forEach(function (p) {
+        var og = document.createElement("optgroup");
+        og.label = p.label;
+        og.appendChild(option(p.key, "All " + p.label.replace(" programme", ""),
+                              node.key === p.key));
+        p.children.forEach(function (g) {
+          og.appendChild(option(g.key, g.label, grp && grp.key === g.key));
+        });
+        sel.appendChild(og);
+      });
+      sel.addEventListener("change", function () { selectNode(sel.value); });
+    }));
+
+    if (grp && grp.children.length) {
+      fv.picks.appendChild(step("Within " + grp.label, function (sel) {
+        sel.appendChild(option(grp.key, "All " + grp.label, node.key === grp.key));
+        grp.children.forEach(function (c) {
+          sel.appendChild(option(c.key, c.label,
+            (name && name.key === c.key) || (leaf && leaf.key === c.key)));
+        });
+        sel.addEventListener("change", function () { selectNode(sel.value); });
+      }));
+    }
+
+    if (name && name.children.length) {
+      fv.picks.appendChild(step("Which one", function (sel) {
+        sel.appendChild(option(name.key, "All " + name.label, node.key === name.key));
+        name.children.forEach(function (c) {
+          sel.appendChild(option(c.key, c.label, leaf && leaf.key === c.key));
+        });
+        sel.addEventListener("change", function () { selectNode(sel.value); });
+      }));
+    }
   }
 
   function cash(v) { return money.format(v); }
@@ -1148,11 +1238,16 @@
       var td = document.createElement("td");
       td.className = "name";
       td.textContent = r.node.label;
+      // Under a session name the row is already labelled by day and time;
+      // repeating it underneath just adds noise.
       if (r.node.session) {
-        var sub = document.createElement("span");
-        sub.className = "sub";
-        sub.textContent = r.node.session.day + " · " + r.node.session.time;
-        td.appendChild(sub);
+        var when = r.node.session.day + " · " + r.node.session.time;
+        if (r.node.label !== r.node.session.day + " " + r.node.session.time) {
+          var sub = document.createElement("span");
+          sub.className = "sub";
+          sub.textContent = when;
+          td.appendChild(sub);
+        }
       }
       var bar = document.createElement("span");
       bar.className = "bar" + (f.profit < 0 ? " neg" : "");
@@ -1175,10 +1270,7 @@
       mc.textContent = f.net ? (f.profit / f.net * 100).toFixed(0) + "%" : "—";
       tr.appendChild(mc);
 
-      tr.addEventListener("click", function () {
-        fv.select.value = r.node.key;
-        selectNode(r.node.key);
-      });
+      tr.addEventListener("click", function () { selectNode(r.node.key); });
       tb.appendChild(tr);
     });
     t.appendChild(tb);
@@ -1190,18 +1282,15 @@
   function selectNode(key) {
     var node = fv.nodes[key] || fv.nodes.all;
     fv.node = node;
-    fv.select.value = node.key;
+    renderPickers(node);
     renderHeadCards();
     renderLevel(node);
   }
 
   function renderFinView() {
-    var root = buildTree();
-    if (!fv.select.options.length) fillSelect(root);
-    selectNode(fv.node ? fv.node.key : "all");
+    buildTree();
+    selectNode(fv.node && fv.nodes[fv.node.key] ? fv.node.key : "all");
   }
-
-  fv.select.addEventListener("change", function () { selectNode(fv.select.value); });
 
   Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (b) {
     b.addEventListener("click", function () {

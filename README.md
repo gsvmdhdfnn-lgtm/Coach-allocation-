@@ -184,18 +184,28 @@ A second view, reached by the **Financials** button and behind the same
 password as the session cards. It answers "how are we doing" rather than
 "where is Danny on Thursday".
 
-Three headline cards — evening, day, combined — then a dropdown that layers
-down through the schedule:
+Three headline cards — evening, day, combined — then dropdowns that cascade,
+each appearing only once the one before it has somewhere to go:
 
 ```
-Everything
-  Evening programme        Day programme
-    Academy                  Daneshill
-      Academy U11              Daneshill · Thu 3:40-4:30pm
+1. Pre Academy          categories on the evening side,
+                        schools on the day side
+
+2. Pre Academy U8       All Pre Academy, then each class
+
+3. Wednesday            All Pre Academy U8, then each time it runs
 ```
 
-Pick any level for its P&L, plus a table of what sits inside it ranked by
-profit, with a bar for relative size. Clicking a row drills in.
+Stop at any level for its P&L, plus a table of what sits inside it ranked by
+profit with a bar for relative size. Clicking a row drills in.
+
+The middle level groups by `session_name`, which is what makes this worth
+having: Pre Academy U8 runs three times a week and the three are not alike.
+Rolled up they look healthy; split out, one of them is carrying the others.
+
+Where a name would say nothing the level is skipped — most day schools name
+every session after the school, so Daneshill goes straight to its days rather
+than through a pointless 'Daneshill → Daneshill' step.
 
 **Both periods are always available.** Evening sessions are billed monthly and
 school sessions weekly, so every figure is converted to whichever basis the

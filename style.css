@@ -711,3 +711,13 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
   .level { padding: 16px; }
   table.bd th, table.bd td { padding: 9px 10px; }
 }
+
+/* Cascading breakdown pickers */
+.fin-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.fin-step { min-width: 0; flex: 1 1 210px; max-width: 320px; }
+.fin-step .picker-label { display: block; margin-bottom: 7px; }
