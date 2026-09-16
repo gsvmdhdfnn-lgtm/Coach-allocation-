@@ -153,10 +153,15 @@ shapes the section below.
 Drop a new `je-logo.png` in beside the others, keeping the name. The header
 sizes it by height, so any width works.
 
-It sits on a white bar in both light and dark mode, deliberately: the artwork
-is navy-on-white, and on the brand blue the wordmark all but disappears. If you
-ever get a white or knocked-out version, the bar can become blue instead -
-change `background: #ffffff` on `.masthead` in `style.css`.
+The header bar is white in both light and dark mode, deliberately. The supplied
+artwork is navy-on-white; against the brand blue the wordmark sits at about
+1.3:1, which is not readable. The logo is matted onto pure white rather than
+cut out, because the source was a JPEG and keying its compression ringing left
+a visible haze around the letters - matting keeps the anti-aliasing clean, and
+the bar behind it is white anyway.
+
+If you ever get a vector (SVG/EPS) or a knocked-out white version, send it over:
+the bar could then go brand blue, which is the stronger look.
 
 ## How safe is the password, really?
 

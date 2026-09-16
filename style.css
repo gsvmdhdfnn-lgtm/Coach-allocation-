@@ -77,30 +77,20 @@ body {
    both themes - on the brand blue the wordmark all but disappears. */
 .masthead {
   background: #ffffff;
-  border-bottom: 5px solid var(--brand-lime);
-  padding: 16px 0 14px;
+  border-bottom: 4px solid var(--brand-lime);
+  padding: 18px 0;
 }
 .masthead-inner {
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 24px;
 }
-.masthead-logo {
-  height: 84px;
-  width: auto;
-  flex: none;
-  display: block;
-}
-/* Echoes the vertical rule the posters use beside the headline. */
-.masthead-text {
-  border-left: 3px solid var(--brand-lime);
-  padding-left: 18px;
-  min-width: 0;
-}
+.masthead-text { min-width: 0; }
 .masthead h1 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.65rem;
+  font-size: 1.7rem;
   font-weight: 400;
   line-height: 1.1;
   text-transform: uppercase;
@@ -108,9 +98,15 @@ body {
   color: var(--brand-blue);
 }
 .masthead-sub {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: #6e7b91;
-  font-size: .9rem;
+  font-size: .92rem;
+}
+.masthead-logo {
+  height: 72px;
+  width: auto;
+  flex: none;
+  display: block;
 }
 
 /* ------------------------------ Picker ------------------------------ */
@@ -527,10 +523,11 @@ body {
 
 @media (max-width: 560px) {
   .wrap { padding: 0 16px; }
-  .masthead-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .masthead-logo { height: 64px; }
-  .masthead-text { border-left: 0; padding-left: 0; }
-  .masthead h1 { font-size: 1.3rem; }
+  .masthead { padding: 14px 0; }
+  .masthead-inner { gap: 14px; }
+  .masthead-logo { height: 52px; }
+  .masthead h1 { font-size: 1.15rem; }
+  .masthead-sub { font-size: .8rem; }
   .picker { max-width: none; }
   .summary h2 { font-size: 1.5rem; }
   .card-head { padding: 15px 16px; }
