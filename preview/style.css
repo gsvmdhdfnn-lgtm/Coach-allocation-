@@ -900,3 +900,13 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
 .prose-list { margin: 0 0 10px; padding-left: 20px; color: var(--ink-soft); font-size: .95rem; line-height: 1.6; }
 .prose-list:last-child { margin-bottom: 0; }
 .prose-list li { margin-bottom: 5px; }
+
+.demo-note {
+  margin: 0 0 16px;
+  padding: 9px 13px;
+  border-left: 3px solid var(--brand-lime);
+  background: var(--line-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--ink-faint);
+  font-size: .86rem;
+}

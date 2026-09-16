@@ -54,7 +54,12 @@ window.APP_CONFIG = {
      financial formulas are untouched.
      The "Venue info" tab can carry an `also_known_as` column instead, which
      is merged on top of this list. */
-  venueAliases: {},
+  venueAliases: {
+    /* The school we coach for and the pitches we hire in the evening are the
+       same car park, but two different strings on the Sessions tab - and the
+       financial formulas need them to stay that way. */
+    "City of London Freemen's": "City of London Freemen's School"
+  },
 
   /* Coaches who appear under more than one name.
      Written as  "name as it appears": "the real coach".

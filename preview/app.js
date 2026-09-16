@@ -1612,6 +1612,14 @@
 
   function hasTab(url) { return !!url && !looksUnset(url); }
 
+  /** One quiet line, so sample wording is never mistaken for the real thing. */
+  function demoNote(parent, what) {
+    if (!CFG.demoContent) return;
+    parent.appendChild(mk("p", "demo-note",
+      "Sample " + what + ", here so the layout can be judged. The real words " +
+      "will come from the sheet."));
+  }
+
   /* ------------------------------- home ------------------------------- */
 
   var ICONS = {
@@ -1797,6 +1805,7 @@
 
   function renderVenues() {
     hub.venueList.innerHTML = "";
+    demoNote(hub.venueList, "arrival detail on a few venues");
     var groups = venueGroups();
     if (!groups.length) {
       hub.venueList.appendChild(mk("p", "empty", "No venues are listed on the schedule yet."));
@@ -1872,6 +1881,7 @@
 
   function renderHandbook() {
     hub.handbookBody.innerHTML = "";
+    demoNote(hub.handbookBody, "wording throughout");
 
     if (hub.infoError) {
       var warn = mk("div", "notice is-error");
