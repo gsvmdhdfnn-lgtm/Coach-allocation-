@@ -83,8 +83,35 @@ David: "I like that calendar link with the session."
 
 1. **Coach hours report** — what each coach actually worked, for checking
    invoices. Needs the calendar and change log first.
-2. **Coach identity** — a code each. Small, but it is the hinge: it turns
-   "the schedule" into "my week" and it is a hard requirement for feedback.
+2. **Coach identity — "their own space"** — a `code` column on the Coaches
+   tab. Tom gets a link with his code in it, or types it once and his phone
+   remembers. No passwords, no accounts, nothing to reset; someone leaves,
+   clear their code.
+
+   It turns "the schedule" into "my week": no dropdown of twelve names, and
+   later his hours this month, his feedback, his sessions with the week's
+   theme on them. David and Josh get a switcher and see everyone.
+
+   **Showing each coach their own view and stopping them seeing others are
+   two different jobs.** The first is easy and is most of the value. The
+   second is not possible while the schedule is a published CSV — the whole
+   file is in the browser on page load and the link to it is in the code, so
+   changing `#coach=Tom` to `#coach=Sam` would work. Same honest caveat as
+   the financials password, only weaker.
+
+   For the schedule that is fine — a coach seeing the rota is not a problem,
+   they cover for each other. Where it is not fine, the real fix is the write
+   path below: `doGet` takes a code, checks it, returns only that person's
+   rows, and the data never leaves Google unless the code is right. The cost
+   is losing the published-CSV simplicity and depending on Apps Script being
+   up.
+
+   **So: personalised views for everything, and the locked-down version only
+   for feedback** — the first thing where "someone could look" is genuinely
+   unacceptable, and it needs that door anyway.
+
+   Weakness to remember: a code in a link gets forwarded and lives in
+   WhatsApp forever. Fine for a schedule. For feedback, make them type it.
 3. **The write path** — an Apps Script web app (`doPost`, deployed as
    "Execute as me"). Prove it on something low-stakes where David sees the
    result, *not* on feedback: a note that silently fails to save is invisible
