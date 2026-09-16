@@ -272,11 +272,29 @@ representation of a session due to inflated hourly." Same reasoning as
 insurance or admin: their pay is a fact about the business, not about
 Tuesday at Freemen's.
 
-Plan: zero (or blank) their rate on the Coaches tab, and add two Overheads
-rows instead - "David's salary" / "Josh's salary", weekly or monthly, same
-shape as everything else on that tab. A session either of them runs then
-shows an honest £0 coach cost, and the real figure sits once, correctly,
-at the business level, exactly like the Overheads work already built.
+**Correction, worked out when David asked exactly which cell to change:**
+the Coaches tab rate is NOT what drives a session's headline Coach cost -
+every Coach cost figure on the Financials page (the head cards, Custom
+filter, the breakdown tables, a single session's own card) reads the
+`coach_cost` column straight off the **Financials tab**, per session_id,
+regardless of who is on the Coaches tab or what their rate says. The
+Coaches tab's `hourly_rate`/`day_rate` only feeds the separate **By coach**
+report, where it splits an already-given session `coach_cost` between
+however many coaches are on that session.
+
+So the actual two-part plan:
+1. **Financials tab** - for every session_id where David or Josh coaches,
+   set `coach_cost` to 0. This is the one that changes what the web app
+   shows everywhere. If `profit` on that row is typed rather than a
+   formula, add the removed coach_cost back into it so profit stays right.
+2. **Coaches tab** - zero or blank their `hourly_rate`/`day_rate` too,
+   for the same reason as before but a smaller one: it keeps the By coach
+   report's own numbers honest, and if either of them ever co-coaches a
+   session with someone else, a zero rate correctly shifts that session's
+   whole coach_cost onto the co-coach's total rather than splitting it.
+
+Either way, the real figure sits once, correctly, at the business level in
+Overheads, exactly like the Overheads work already built.
 
 Trade-off, flagged so it isn't a surprise later: a session where one of
 them is the ONLY coach on it will then look artificially cheap - its true
