@@ -57,7 +57,19 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 4. **Fill in `Venue info`** — the Freemen's alias, then addresses and postcodes
    (without them, Directions is a name search and is weak for the
    single-word venues like Milbourne and Parkside)
-5. **Decide whether to promote the preview** over the live site
+5. **Decide whether to promote the preview** over the live site — does
+   NOT require any of the other steps on this list first. Every new section
+   checks whether its tab is configured and quietly stays hidden if not, so
+   promoting today with nothing else done would just look like a cleaner
+   version of the current live site: Schedule as now, Venues working
+   already (it builds from Sessions.csv alone), Handbook/Resources/the week
+   picker simply absent from the nav, everyone seeing the whole-team view
+   with an empty "got a code?" box. Nothing half-finished, nothing broken.
+   The one thing worth sequencing deliberately is `addCoachCodes` - not
+   needed to promote the site, but needed before handing an actual coach a
+   personal link, since until then there is nothing for the link to point
+   to. Everything else can be filled in at whatever pace suits, each
+   feature switching on the moment its CSV link lands in config.js.
 6. **Fill in the `Resources` tab** — the term posters. Needs somewhere the
    images can be loaded from directly; a plain Drive sharing link will not
    do it (the script's note on the `image_url` header explains the
