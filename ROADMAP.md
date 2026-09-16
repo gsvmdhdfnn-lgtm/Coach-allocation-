@@ -99,6 +99,30 @@ already looks up venue/day/time via `INDEX/MATCH`, counts how many
 flat `weeksPerMonth` constant. The hours report does the identical lookup
 before counting an hour worked.
 
+**How to represent a gap inside a term (e.g. half term):** `Terms` is a
+boundary (start, end) — nothing more. A closure inside an otherwise-running
+term, like Dane's Hill's half term, is NOT a second date range on `Terms`.
+It is the same kind of fact as a coach's holiday or a one-off cover, so it
+goes on `Changes`: one `venue: X, type: cancelled` row per closed week (a
+two-week half term is two rows). Deliberately not given its own mechanism —
+`Changes` already exists and is tested, and a term with a built-in
+exclusion range would be a second way to say "not running", which is the
+thing worth avoiding (two places that could disagree about the same fact).
+David's own example, to keep as the reference case:
+  `Terms`: Daneshill, starts 2026-09-12, ends 2026-12-12
+  `Changes`: Daneshill cancelled, week_commencing 2026-10-19
+  `Changes`: Daneshill cancelled, week_commencing 2026-10-26
+Three rows, not one clever cell. The financials and the hours report read
+all three the same way the schedule already does.
+
+**The coach hours report — confirmed buildable both ways David asked for:**
+on demand (a button/menu item in the spreadsheet, same pattern as every
+other script delivered so far) and automatically at month-end (a Google
+Apps Script time-based trigger — native to Apps Script, no new
+infrastructure). Both run the identical report logic against Sessions +
+Terms + Changes + Calendar; building one does not cost building the other
+later, since only the trigger differs.
+
 - A `Calendar` tab: which weeks each session actually runs (half term, term
   dates), so monthly figures stop assuming 4.33 weeks of everything
 - A `Changes` log: the exceptions only — a night off, a swap, a cover, a
