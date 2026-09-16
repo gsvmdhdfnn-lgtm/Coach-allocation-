@@ -265,6 +265,29 @@ below - a forecast that only counts coach and venue cost while ignoring
 insurance and admin overstates what the business actually brings in, so
 the two land together.
 
+**Flexible financial filtering — David's follow-up, folded into the same
+tool as the date-range forecast below, not a separate build.** Two
+examples he gave: "all afterschool clubs, 3-4:30pm" and "Monday evening at
+Freemen's" (one venue, several different sessions running there). These
+are two different KINDS of question, worth keeping distinct:
+
+- "By venue" is a GROUPING, same shape as the existing "By coach" view -
+  it already works, proven, just needs a venue-shaped sibling in the same
+  dropdown. Picking "By venue" -> Freemen's -> Monday shows everything
+  there regardless of which school or programme it belongs to. Gets the
+  Freemen's alias fix (built for the Venues section) for free, so the two
+  spellings of that venue do not split into separate entries.
+- "3-4:30pm across everything" is a FILTER, not a category to pick from a
+  list - an open range, typed in. This is the same tool as the date-range
+  forecast below, just filtering time-of-day instead of date. Rather than
+  build these as two separate features, build ONE flexible filter - date
+  range, time-of-day range, venue, day of week, any combination - and both
+  of David's examples become different uses of the same tool rather than
+  two bespoke builds.
+
+Not built - a design, connected explicitly to the forecast entry below so
+they get built together rather than drifting into duplicate mechanisms.
+
 **Financial forecast / date-range P&L — new, well-specified, David's idea.**
 Sits ON TOP of the term-accuracy fix above, not alongside it - only makes
 sense once a session's real weeks-running is correct, so build it after,
