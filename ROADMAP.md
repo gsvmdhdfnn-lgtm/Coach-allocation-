@@ -263,6 +263,29 @@ as a percentage of revenue for the period (more setup, exact), or enter a
 rough average monthly figure (simpler, approximate). David's call, not
 mine, when the time comes.
 
+**David and Josh's own pay belongs in Overheads too, not per session -
+agreed, not yet built.** Both are full-time salaried, not paid per
+session, so giving them an hourly rate on the Coaches tab and letting that
+get divided across whatever sessions they happen to run produces a false
+per-session cost - David's words: "doesn't seem fair to have a false
+representation of a session due to inflated hourly." Same reasoning as
+insurance or admin: their pay is a fact about the business, not about
+Tuesday at Freemen's.
+
+Plan: zero (or blank) their rate on the Coaches tab, and add two Overheads
+rows instead - "David's salary" / "Josh's salary", weekly or monthly, same
+shape as everything else on that tab. A session either of them runs then
+shows an honest £0 coach cost, and the real figure sits once, correctly,
+at the business level, exactly like the Overheads work already built.
+
+Trade-off, flagged so it isn't a surprise later: a session where one of
+them is the ONLY coach on it will then look artificially cheap - its true
+cost is being carried by the Overheads line elsewhere on the page, not
+hidden, just living somewhere else. Not worth solving now (would mean
+splitting salary back out proportionally by hours worked, real
+complexity); only worth building if the simple version turns out to
+actually mislead in practice.
+
 **Where it lands:** whole-company profit becomes session profit (revenue
 minus coach cost minus venue cost, already correct) MINUS whatever
 Overheads says for that period - applied once at the business level, never
