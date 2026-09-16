@@ -21,6 +21,9 @@
   --accent-bg:  #e6ecf8;
   --positive:   #1f7a4c;
   --negative:   #b3322e;
+  --warn:       #9a5a12;
+  --warn-ink:   #ffffff;
+  --negative-ink: #ffffff;
   --shadow:     0 1px 2px rgba(22, 35, 61, .05), 0 6px 20px rgba(22, 35, 61, .07);
   --shadow-lift:0 2px 6px rgba(22, 35, 61, .08), 0 14px 34px rgba(22, 35, 61, .12);
   --radius:     14px;
@@ -42,6 +45,9 @@
     --accent-bg:  #223052;
     --positive:   #5fcb94;
     --negative:   #f08a8a;
+    --warn:       #e8b06a;
+    --warn-ink:   #241a0c;
+    --negative-ink: #2a0f0f;
     --shadow:     0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .3);
     --shadow-lift:0 2px 6px rgba(0, 0, 0, .35), 0 14px 34px rgba(0, 0, 0, .45);
   }
@@ -1045,22 +1051,41 @@ a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   color: var(--accent);
 }
 
+/* A session that is not simply "yours, as usual" says so across the top of
+   the card, before the name. A small tag among the age group and category
+   tags got skimmed straight past, which for "do not turn up" is no good. */
+.card-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 10px 18px;
+  font-size: .8rem;
+  line-height: 1.35;
+}
+.card-status .what {
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.card-status .why { font-weight: 600; opacity: .88; }
+
+.st-off      { background: var(--negative);    color: var(--negative-ink); }
+.st-covered  { background: var(--warn);        color: var(--warn-ink); }
+.st-covering { background: var(--brand-lime);  color: #16233d; }
+.st-extra    { background: var(--accent);      color: #fff; }
+@media (prefers-color-scheme: dark) { .st-extra { color: #0c1a16; } }
+
 /* A cancelled session stays on the list. Vanishing reads as "deleted", and
    a coach who assumes that turns up anyway. */
-.card.is-off { background: var(--line-soft); border-style: dashed; }
-.card.is-off .card-title h3 { text-decoration: line-through; color: var(--ink-faint); }
+.card.is-off { background: var(--line-soft); }
+.card.is-off .card-title h3,
 .card.is-off .card-time .t { text-decoration: line-through; color: var(--ink-faint); }
-.card.is-handed-over { opacity: .72; }
 
-.tag-off {
-  background: var(--negative);
-  color: #fff;
-  font-weight: 700;
-}
-.tag-handed { background: var(--line); color: var(--ink-soft); font-weight: 650; }
-.tag-cover  { background: var(--brand-lime); color: #16233d; font-weight: 700; }
-.tag-extra  { background: var(--accent); color: #fff; font-weight: 700; }
-@media (prefers-color-scheme: dark) {
-  .tag-cover { color: #0c1a16; }
-  .tag-extra { color: #0c1a16; }
-}
+/* Covered is not faded: fading makes it harder to read, which is the
+   opposite of what "someone else has this" needs to be. A stripe does the
+   work instead. */
+.card.is-handed-over { border-left: 4px solid var(--warn); }
+.card.is-cover       { border-left: 4px solid var(--brand-lime); }
+.card.is-extra       { border-left: 4px solid var(--accent); }
+.card.is-off         { border-left: 4px solid var(--negative); }

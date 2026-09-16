@@ -93,12 +93,26 @@ in `coach_in`; there is no base session to point at.
 
 ### What a coach sees
 
-- **Cancelled** — still listed, greyed and struck through, with the reason.
-  Vanishing reads as "deleted", and a coach who assumes that turns up anyway.
-- **Covered** — a session they have handed over stays on the list, faded,
-  saying who has it. It does not count towards their sessions for the week.
-- **Covering** — a session picked up from someone else, badged with whose.
-- **One-off** — an `extra`, badged so it is clearly not the usual.
+Anything that is not simply "yours, as usual" gets a coloured banner across
+the top of the card, before the session name. A small tag among the age
+group and category tags got skimmed straight past, and for "do not turn up"
+that is no good.
+
+| | banner | the card |
+| --- | --- | --- |
+| **Cancelled** | red — *Cancelled — not happening*, with the reason | greyed, name and time struck through |
+| **Covered** | amber — *Sam is covering · You are not needed* | red-free, full contrast, amber stripe |
+| **Covering** | lime — *Covering for Tom* | lime stripe |
+| **One-off** | blue — *One-off — not on the usual schedule* | blue stripe |
+
+The headline carries the fact — "Sam is covering", not "Covered" — because a
+coach skimming on a phone reads four words, and a label alone does not tell
+them whether to turn up.
+
+Covered sessions are deliberately **not** faded. Fading makes them harder to
+read, which is the opposite of what "someone else has this" needs to be; a
+stripe does that job instead. They stay on the list (vanishing reads as
+"deleted") but do not count towards the coach's sessions for the week.
 
 Without those two tabs there is no picker and no theme, and the schedule is
 the plain base week exactly as before.

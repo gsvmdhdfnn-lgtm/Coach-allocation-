@@ -906,11 +906,45 @@
     el.weekbar.hidden = false;
   }
 
+  /**
+   * What the banner says. The headline carries the fact - "Sam is covering",
+   * not "Covered" - because a coach skimming on a phone reads four words and
+   * the label alone does not tell them whether to turn up.
+   */
+  function statusBanner(status, item, coach) {
+    if (status === "on") return null;
+    var note = (item && item.note) || "";
+
+    var head, cls, why = note;
+    if (status === "cancelled") {
+      cls = "st-off"; head = "Cancelled — not happening";
+    } else if (status === "covered") {
+      cls = "st-covered";
+      head = note || "Someone else is covering";
+      why = "You are not needed";
+    } else if (status === "covering") {
+      cls = "st-covering";
+      head = note || "You are covering this one";
+      why = "";
+    } else {
+      cls = "st-extra"; head = "One-off — not on the usual schedule";
+    }
+
+    var bar = mk("div", "card-status " + cls);
+    bar.appendChild(mk("span", "what", head));
+    if (why) bar.appendChild(mk("span", "why", why));
+    return bar;
+  }
+
   function buildCard(session, coach, item) {
     var status = (item && item.status) || "on";
     var card = document.createElement("article");
     card.className = "card" + (status === "cancelled" ? " is-off" :
-                               status === "covered" ? " is-handed-over" : "");
+                               status === "covered" ? " is-handed-over" :
+                               status === "covering" ? " is-cover" :
+                               status === "extra" ? " is-extra" : "");
+    var banner = statusBanner(status, item, coach);
+    if (banner) card.appendChild(banner);
 
     var btn = document.createElement("button");
     btn.type = "button";
@@ -931,19 +965,6 @@
     // only repeat what a tag already said ("School" alongside "Day").
     var tags = document.createElement("div");
     tags.className = "tags";
-
-    if (status !== "on") {
-      var badge = document.createElement("span");
-      badge.className = "tag " + (
-        status === "cancelled" ? "tag-off" :
-        status === "covered"   ? "tag-handed" :
-        status === "covering"  ? "tag-cover" : "tag-extra");
-      badge.textContent =
-        status === "cancelled" ? "Cancelled" :
-        status === "covered"   ? "Covered" :
-        status === "covering"  ? "Covering" : "One-off";
-      tags.appendChild(badge);
-    }
 
     var shown = Object.create(null);
     [[session.ageGroup, true], [session.category, false], [session.programme, false]]
@@ -985,13 +1006,7 @@
     var others = onIt.filter(function (c) { return nameKey(c) !== nameKey(coach.name); });
     facts.appendChild(fact("With", others.length ? others.join(", ") : "On their own"));
 
-    if (item && item.note) {
-      facts.appendChild(fact(
-        status === "cancelled" ? "Why" :
-        status === "covered"   ? "Cover" :
-        status === "covering"  ? "For"  : "Note",
-        item.note));
-    }
+    /* The banner already carries the reason - no need to say it twice. */
     btn.appendChild(facts);
 
     card.appendChild(btn);
