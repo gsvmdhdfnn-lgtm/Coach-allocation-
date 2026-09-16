@@ -25,6 +25,11 @@
   </div>
 </header>
 
+<nav class="views wrap" id="views" hidden>
+  <button type="button" class="view-btn is-on" data-view="schedule">Schedule</button>
+  <button type="button" class="view-btn" data-view="financials">Financials</button>
+</nav>
+
 <main class="wrap" id="main">
 
   <!-- Coach picker -->
@@ -58,6 +63,24 @@
   <section id="results" hidden>
     <div class="summary" id="summary"></div>
     <div id="days"></div>
+  </section>
+
+  <section id="finview" hidden>
+    <div class="fin-top">
+      <div class="seg" role="group" aria-label="Show figures per">
+        <button type="button" class="seg-btn is-on" data-basis="monthly">Per month</button>
+        <button type="button" class="seg-btn" data-basis="weekly">Per week</button>
+      </div>
+    </div>
+
+    <div class="head-cards" id="head-cards"></div>
+
+    <div class="picker fin-picker">
+      <label class="picker-label" for="fin-select">Break down by</label>
+      <select id="fin-select" class="fin-select"></select>
+    </div>
+
+    <div id="fin-detail"></div>
   </section>
 
 </main>

@@ -266,6 +266,7 @@
         time:      r.time || "",
         venue:     r.venue || "",
         address:   r.address || "",
+        client:    r.client || "",
         coaches:   splitCoaches(r.coaches),
         startMin:  startMinutes(r.time)
       };
@@ -355,6 +356,7 @@
   function ready() {
     el.picker.hidden = false;
     el.status.hidden = true;
+    if (fv && fv.nav) fv.nav.hidden = false;
 
     var fromHash = coachFromHash();
     if (fromHash) select(fromHash, { silent: true });
@@ -918,6 +920,327 @@
     if (name && (!state.selected || nameKey(name) !== nameKey(state.selected.name))) {
       select(name, { silent: true });
     }
+  });
+
+
+  /* ====================================================================== *
+   * Financials view - roll-ups above the per-session cards
+   * ====================================================================== */
+
+  var WEEKS = Number(CFG.weeksPerMonth) || 4.3333;
+  var fv = {
+    nav:    document.getElementById("views"),
+    view:   document.getElementById("finview"),
+    cards:  document.getElementById("head-cards"),
+    select: document.getElementById("fin-select"),
+    detail: document.getElementById("fin-detail"),
+    basis:  "monthly",
+    nodes:  {},
+    node:   null
+  };
+
+  /** Totals for a set of sessions, expressed in BOTH bases. */
+  function agg(list) {
+    var a = { participants: 0, missing: 0, counted: 0,
+      monthly: { gross:0, net:0, coach:0, venue:0, profit:0 },
+      weekly:  { gross:0, net:0, coach:0, venue:0, profit:0 } };
+    list.forEach(function (s) {
+      var f = state.financials && state.financials[s.id];
+      if (!f) { a.missing++; return; }
+      a.counted++;
+      var per = String(f.period || "").toLowerCase();
+      var toM = per === "weekly" ? WEEKS : 1;
+      var toW = per === "monthly" ? 1 / WEEKS : 1;
+      var v = { gross: num(f.revenue_gross) || 0, net: num(f.revenue_net) || 0,
+                coach: num(f.coach_cost) || 0, venue: num(f.venue_cost) || 0,
+                profit: num(f.profit) || 0 };
+      a.participants += num(f.participants) || 0;
+      Object.keys(v).forEach(function (k) {
+        a.monthly[k] += v[k] * toM;
+        a.weekly[k]  += v[k] * toW;
+      });
+    });
+    return a;
+  }
+
+  function isDay(s) { return /^day$/i.test(s.programme); }
+
+  /** Everything -> programme -> category or school -> session. */
+  function buildTree() {
+    var root = { key: "all", label: "Everything", level: 0,
+                 sessions: state.sessions.slice(), children: [] };
+    var progs = {};
+    state.sessions.forEach(function (s) {
+      var pLabel = isDay(s) ? "Day programme" : "Evening programme";
+      var gLabel = isDay(s) ? (s.client || s.venue || "Unknown")
+                            : (s.category || "Other");
+      var p = progs[pLabel];
+      if (!p) {
+        p = progs[pLabel] = { key: "p:" + pLabel, label: pLabel, level: 1,
+                              sessions: [], children: [], groups: {} };
+        root.children.push(p);
+      }
+      p.sessions.push(s);
+      var g = p.groups[gLabel];
+      if (!g) {
+        g = p.groups[gLabel] = { key: "g:" + pLabel + ":" + gLabel, label: gLabel,
+                                 level: 2, sessions: [], children: [] };
+        p.children.push(g);
+      }
+      g.sessions.push(s);
+      g.children.push({ key: "s:" + s.id, label: s.name, level: 3,
+                        sessions: [s], children: [], session: s });
+    });
+
+    // Biggest earner first, at every level.
+    (function rank(node) {
+      node.children.sort(function (a, b) {
+        return agg(b.sessions).monthly.profit - agg(a.sessions).monthly.profit;
+      });
+      node.children.forEach(rank);
+    })(root);
+
+    fv.nodes = {};
+    (function index(n) { fv.nodes[n.key] = n; n.children.forEach(index); })(root);
+    return root;
+  }
+
+  function fillSelect(root) {
+    fv.select.innerHTML = "";
+    (function walk(n) {
+      var o = document.createElement("option");
+      o.value = n.key;
+      // Day sessions are named after the school, so several read alike -
+      // the day and time are what tell them apart.
+      var label = n.label;
+      if (n.session) label += " · " + n.session.day.slice(0, 3) + " " + n.session.time;
+      o.textContent = (n.level ? Array(n.level * 3 + 1).join(" ") : "") +
+                      (n.level === 3 ? "· " : "") + label;
+      fv.select.appendChild(o);
+      n.children.forEach(walk);
+    })(root);
+  }
+
+  function cash(v) { return money.format(v); }
+
+  function statCell(label, value, cls) {
+    var d = document.createElement("div");
+    d.className = "fin-cell";
+    var l = document.createElement("span");
+    l.className = "label"; l.textContent = label;
+    var s2 = document.createElement("span");
+    s2.className = "value" + (cls ? " " + cls : "");
+    s2.textContent = value;
+    d.appendChild(l); d.appendChild(s2);
+    return d;
+  }
+
+  function headCard(title, a, isTotal) {
+    var c = document.createElement("div");
+    c.className = "hcard" + (isTotal ? " is-total" : "");
+    var h = document.createElement("h3"); h.textContent = title; c.appendChild(h);
+
+    var other = fv.basis === "monthly" ? "weekly" : "monthly";
+    var big = document.createElement("div");
+    big.className = "big " + (a[fv.basis].profit >= 0 ? "pos" : "neg");
+    big.textContent = cash(a[fv.basis].profit);
+    c.appendChild(big);
+
+    var alt = document.createElement("div");
+    alt.className = "alt";
+    alt.textContent = (fv.basis === "monthly" ? "per month" : "per week") +
+      " · " + cash(a[other].profit) +
+      (other === "monthly" ? " per month" : " per week");
+    c.appendChild(alt);
+
+    var rows = document.createElement("div");
+    rows.className = "rows";
+    [["Revenue (net)", a[fv.basis].net], ["Coach cost", a[fv.basis].coach],
+     ["Venue cost", a[fv.basis].venue]].forEach(function (r) {
+      var d = document.createElement("div");
+      var k = document.createElement("span"); k.textContent = r[0];
+      var v = document.createElement("span"); v.textContent = cash(r[1]);
+      d.appendChild(k); d.appendChild(v); rows.appendChild(d);
+    });
+    c.appendChild(rows);
+    return c;
+  }
+
+  function renderHeadCards() {
+    fv.cards.innerHTML = "";
+    var ev = state.sessions.filter(function (s) { return !isDay(s); });
+    var dy = state.sessions.filter(isDay);
+    fv.cards.appendChild(headCard("Evening programme", agg(ev), false));
+    fv.cards.appendChild(headCard("Day programme", agg(dy), false));
+    fv.cards.appendChild(headCard("Combined", agg(state.sessions), true));
+  }
+
+  function renderLevel(node) {
+    fv.detail.innerHTML = "";
+    var a = agg(node.sessions);
+    var f = a[fv.basis];
+
+    var panel = document.createElement("section");
+    panel.className = "level";
+    var h = document.createElement("h2"); h.textContent = node.label;
+    panel.appendChild(h);
+
+    var crumb = document.createElement("p");
+    crumb.className = "crumb";
+    crumb.textContent = node.sessions.length +
+      (node.sessions.length === 1 ? " session" : " sessions") +
+      (a.participants ? " · " + a.participants + " participants" : "") +
+      " · figures " + (fv.basis === "monthly" ? "per month" : "per week");
+    panel.appendChild(crumb);
+
+    var grid = document.createElement("div");
+    grid.className = "level-grid";
+    grid.appendChild(statCell("Revenue (gross)", cash(f.gross)));
+    grid.appendChild(statCell("Revenue (net)", cash(f.net)));
+    grid.appendChild(statCell("Coach cost", cash(f.coach)));
+    grid.appendChild(statCell("Venue cost", cash(f.venue)));
+    grid.appendChild(statCell("Profit", cash(f.profit), f.profit >= 0 ? "pos" : "neg"));
+    grid.appendChild(statCell("Margin",
+      f.net ? (f.profit / f.net * 100).toFixed(1) + "%" : "—",
+      f.profit >= 0 ? "pos" : "neg"));
+    panel.appendChild(grid);
+
+    if (a.missing) {
+      var w = document.createElement("p");
+      w.className = "fin-note";
+      w.textContent = a.missing + " session" + (a.missing === 1 ? " has" : "s have") +
+        " no row on the Financials tab and are left out of these totals.";
+      panel.appendChild(w);
+    }
+    fv.detail.appendChild(panel);
+
+    if (node.children.length) fv.detail.appendChild(breakdown(node));
+  }
+
+  function breakdown(node) {
+    var wrap = document.createElement("div");
+    wrap.className = "level";
+    var h = document.createElement("h2");
+    h.textContent = "What's inside";
+    h.style.fontSize = "1.05rem";
+    wrap.appendChild(h);
+
+    var rows = node.children.map(function (c) {
+      return { node: c, a: agg(c.sessions) };
+    });
+    var peak = Math.max.apply(null, rows.map(function (r) {
+      return Math.abs(r.a[fv.basis].profit);
+    }).concat([1]));
+
+    var scroll = document.createElement("div");
+    scroll.className = "bd-wrap";
+    var t = document.createElement("table");
+    t.className = "bd";
+    t.innerHTML = "<thead><tr><th>Name</th><th>Kids</th><th>Revenue</th>" +
+      "<th>Coach</th><th>Venue</th><th>Profit</th><th>Margin</th></tr></thead>";
+    var tb = document.createElement("tbody");
+
+    rows.forEach(function (r) {
+      var f = r.a[fv.basis];
+      var tr = document.createElement("tr");
+      if (r.node.children.length || r.node.session) tr.className = "is-link";
+
+      var td = document.createElement("td");
+      td.className = "name";
+      td.textContent = r.node.label;
+      if (r.node.session) {
+        var sub = document.createElement("span");
+        sub.className = "sub";
+        sub.textContent = r.node.session.day + " · " + r.node.session.time;
+        td.appendChild(sub);
+      }
+      var bar = document.createElement("span");
+      bar.className = "bar" + (f.profit < 0 ? " neg" : "");
+      bar.style.width = Math.max(2, Math.abs(f.profit) / peak * 100) + "%";
+      td.appendChild(bar);
+      tr.appendChild(td);
+
+      // Per-coach-hour schools have no participants; 0 would read as "empty".
+      var kids = r.a.participants ? String(r.a.participants)
+               : (r.a.counted ? "n/a" : "—");
+      [kids, cash(f.net), cash(f.coach), cash(f.venue)].forEach(function (v) {
+        var c = document.createElement("td"); c.textContent = v; tr.appendChild(c);
+      });
+      var pc = document.createElement("td");
+      pc.textContent = cash(f.profit);
+      pc.className = f.profit >= 0 ? "pos" : "neg";
+      pc.style.fontWeight = "600";
+      tr.appendChild(pc);
+      var mc = document.createElement("td");
+      mc.textContent = f.net ? (f.profit / f.net * 100).toFixed(0) + "%" : "—";
+      tr.appendChild(mc);
+
+      tr.addEventListener("click", function () {
+        fv.select.value = r.node.key;
+        selectNode(r.node.key);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+    return wrap;
+  }
+
+  function selectNode(key) {
+    var node = fv.nodes[key] || fv.nodes.all;
+    fv.node = node;
+    fv.select.value = node.key;
+    renderHeadCards();
+    renderLevel(node);
+  }
+
+  function renderFinView() {
+    var root = buildTree();
+    if (!fv.select.options.length) fillSelect(root);
+    selectNode(fv.node ? fv.node.key : "all");
+  }
+
+  fv.select.addEventListener("change", function () { selectNode(fv.select.value); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (b) {
+    b.addEventListener("click", function () {
+      fv.basis = b.getAttribute("data-basis");
+      Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (o) {
+        o.classList.toggle("is-on", o === b);
+      });
+      if (fv.node) selectNode(fv.node.key);
+    });
+  });
+
+  /* ------------------------------ views ------------------------------ */
+
+  function setView(name) {
+    Array.prototype.forEach.call(document.querySelectorAll(".view-btn"), function (b) {
+      b.classList.toggle("is-on", b.getAttribute("data-view") === name);
+    });
+    var fin = name === "financials";
+    fv.view.hidden = !fin;
+    el.picker.hidden = fin;
+    if (fin) {
+      el.results.hidden = true;
+      el.status.hidden = true;
+      renderFinView();
+    } else {
+      fv.view.hidden = true;
+      if (state.selected) render(); else ready();
+    }
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".view-btn"), function (b) {
+    b.addEventListener("click", function () {
+      var name = b.getAttribute("data-view");
+      if (name === "financials" && !state.financials) {
+        askPassword().then(function (ok) { if (ok) setView("financials"); });
+        return;
+      }
+      setView(name);
+    });
   });
 
   /* ====================================================================== */

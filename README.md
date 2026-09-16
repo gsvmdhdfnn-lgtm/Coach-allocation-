@@ -178,6 +178,40 @@ shapes the section below.
 
 ---
 
+## The Financials view
+
+A second view, reached by the **Financials** button and behind the same
+password as the session cards. It answers "how are we doing" rather than
+"where is Danny on Thursday".
+
+Three headline cards — evening, day, combined — then a dropdown that layers
+down through the schedule:
+
+```
+Everything
+  Evening programme        Day programme
+    Academy                  Daneshill
+      Academy U11              Daneshill · Thu 3:40-4:30pm
+```
+
+Pick any level for its P&L, plus a table of what sits inside it ranked by
+profit, with a bar for relative size. Clicking a row drills in.
+
+**Both periods are always available.** Evening sessions are billed monthly and
+school sessions weekly, so every figure is converted to whichever basis the
+Per month / Per week toggle is set to, and the headline cards print the other
+one underneath. Combined is only ever a sum of two figures on the same basis —
+the mixed number that would result from adding a monthly total to a weekly one
+is never shown.
+
+Per-coach-hour schools have no participants, so they show `n/a` rather than
+`0` — otherwise a school billed by the hour looks empty.
+
+The grouping in the middle layer is `category` for evening rows and `client`
+for day rows. That is why `client` exists: City of London Freemen's is both a
+venue for the evening Academy and a separate day-school customer, and grouping
+by venue would silently merge them.
+
 ## Replacing the logo
 
 Drop a new `je-logo.png` in beside the others, keeping the name. The header
