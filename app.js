@@ -1069,7 +1069,8 @@
   /** One dropdown per level that has somewhere further to go. */
   function renderPickers(node) {
     fv.picks.innerHTML = "";
-    var path = chain(node);
+    var coachView = !!node.coachView;
+    var path = coachView ? [] : chain(node);
     var grp  = path[2] || null;     // category or school
     var name = path[3] || null;     // session name
     var leaf = path[4] || null;     // the individual session
@@ -1086,6 +1087,10 @@
         });
         sel.appendChild(og);
       });
+      var og2 = document.createElement("optgroup");
+      og2.label = "The team";
+      og2.appendChild(option("coaches", "By coach", coachView));
+      sel.appendChild(og2);
       sel.addEventListener("change", function () { selectNode(sel.value); });
     }));
 
@@ -1279,7 +1284,249 @@
     return wrap;
   }
 
+
+  /* ---------------------------- by coach ---------------------------- */
+
+  /** A coach's hourly rate, evening or day, from the Coaches tab. */
+  function rateFor(name, evening) {
+    var row = state.rates[nameKey(name)];
+    if (!row) return 0;
+    var r = num(evening ? row.hourly_rate : (row.day_rate || row.hourly_rate));
+    return r === null ? 0 : r;
+  }
+
+  /**
+   * Split each session's coach cost between the people on it, in proportion
+   * to what they are paid. Hours divide by the groups sharing the slot, so a
+   * coach covering four classes in one hour is credited with one hour.
+   */
+  function coachRows() {
+    var m = {};
+    coachRows.noHours = 0;
+    function slot(n) {
+      if (!m[n]) m[n] = { name: n, hoursWk: 0, sessions: 0,
+        monthly: { evening: 0, day: 0, total: 0 },
+        weekly:  { evening: 0, day: 0, total: 0 } };
+      return m[n];
+    }
+    state.sessions.forEach(function (s) {
+      var f = state.financials && state.financials[s.id];
+      if (!f) return;
+      var ev = !isDay(s);
+      var cost = num(f.coach_cost) || 0;
+      var per = String(f.period || "").toLowerCase();
+      var toM = per === "weekly" ? WEEKS : 1;
+      var toW = per === "monthly" ? 1 / WEEKS : 1;
+      var groups = num(f.coach_groups) || 1;
+      var raw = num(f.hours);
+      if (raw === null || raw === 0) coachRows.noHours++;
+      var hrs = Math.max(raw || 0, 1) / (groups || 1);
+
+      var rates = s.coaches.map(function (c) { return rateFor(c, ev); });
+      var tot = rates.reduce(function (a, b) { return a + b; }, 0);
+
+      s.coaches.forEach(function (c, i) {
+        var share = tot > 0 ? rates[i] / tot : 1 / s.coaches.length;
+        var r = slot(c);
+        r.sessions++;
+        r.hoursWk += hrs;
+        r.monthly.total += cost * share * toM;
+        r.weekly.total  += cost * share * toW;
+        r.monthly[ev ? "evening" : "day"] += cost * share * toM;
+        r.weekly[ev ? "evening" : "day"]  += cost * share * toW;
+      });
+    });
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .sort(function (a, b) { return b.monthly.total - a.monthly.total; });
+  }
+
+  function renderCoaches() {
+    fv.detail.innerHTML = "";
+    var rows = coachRows();
+    var basis = fv.basis;
+    var grand = rows.reduce(function (a, r) { return a + r[basis].total; }, 0);
+    var hours = rows.reduce(function (a, r) { return a + r.hoursWk; }, 0);
+
+    var panel = document.createElement("section");
+    panel.className = "level";
+    var h = document.createElement("h2"); h.textContent = "Coach costs";
+    panel.appendChild(h);
+    var crumb = document.createElement("p");
+    crumb.className = "crumb";
+    crumb.textContent = rows.length + " coaches \u00b7 figures " +
+      (basis === "monthly" ? "per month" : "per week");
+    panel.appendChild(crumb);
+
+    var grid = document.createElement("div");
+    grid.className = "level-grid";
+    grid.appendChild(statCell("Total coach cost", cash(grand)));
+    grid.appendChild(statCell("Hours a week", hours.toFixed(2)));
+    grid.appendChild(statCell("Average rate",
+      hours ? cash(grand / (basis === "monthly" ? hours * WEEKS : hours)) + "/hr" : "\u2014"));
+    grid.appendChild(statCell("Coaches", String(rows.length)));
+    panel.appendChild(grid);
+    if (coachRows.noHours) {
+      var warn = document.createElement("p");
+      warn.className = "fin-note";
+      warn.textContent = coachRows.noHours + " session" +
+        (coachRows.noHours === 1 ? " has" : "s have") + " no hours on the " +
+        "Financials tab, so they are counted as one hour each and these " +
+        "totals are low.";
+      panel.appendChild(warn);
+    }
+    fv.detail.appendChild(panel);
+
+    var wrap = document.createElement("div");
+    wrap.className = "level";
+    var h2 = document.createElement("h2");
+    h2.textContent = "Where it goes";
+    h2.style.fontSize = "1.05rem";
+    wrap.appendChild(h2);
+
+    var scroll = document.createElement("div");
+    scroll.className = "bd-wrap";
+    var t = document.createElement("table");
+    t.className = "bd";
+    t.innerHTML = "<thead><tr><th>Coach</th><th>Hrs/wk</th><th>Sessions</th>" +
+      "<th>Evening</th><th>Day</th><th>Total</th><th>Share</th></tr></thead>";
+    var tb = document.createElement("tbody");
+    var peak = Math.max.apply(null, rows.map(function (r) { return r[basis].total; }).concat([1]));
+
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.className = "is-link";
+      var td = document.createElement("td");
+      td.className = "name";
+      td.textContent = r.name;
+      var sub = document.createElement("span");
+      sub.className = "sub";
+      var row = state.rates[nameKey(r.name)];
+      sub.textContent = row
+        ? cash(num(row.hourly_rate) || 0) + "/hr evening \u00b7 " +
+          cash(num(row.day_rate || row.hourly_rate) || 0) + "/hr day"
+        : "no rate on the Coaches tab";
+      td.appendChild(sub);
+      var bar = document.createElement("span");
+      bar.className = "bar";
+      bar.style.width = Math.max(2, r[basis].total / peak * 100) + "%";
+      td.appendChild(bar);
+      tr.appendChild(td);
+
+      [r.hoursWk.toFixed(2), String(r.sessions),
+       cash(r[basis].evening), cash(r[basis].day)].forEach(function (v) {
+        var c = document.createElement("td"); c.textContent = v; tr.appendChild(c);
+      });
+      var tc = document.createElement("td");
+      tc.textContent = cash(r[basis].total);
+      tc.style.fontWeight = "600";
+      tr.appendChild(tc);
+      var sc = document.createElement("td");
+      sc.textContent = grand ? (r[basis].total / grand * 100).toFixed(1) + "%" : "\u2014";
+      tr.appendChild(sc);
+
+      tr.addEventListener("click", function () { selectNode("c:" + r.name); });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+    fv.detail.appendChild(wrap);
+  }
+
+  /** One coach: their cost, and the sessions it comes from. */
+  function renderCoachDetail(name) {
+    fv.detail.innerHTML = "";
+    var me = coachRows().filter(function (r) { return nameKey(r.name) === nameKey(name); })[0];
+    if (!me) { selectNode("coaches"); return; }
+    var basis = fv.basis;
+
+    var panel = document.createElement("section");
+    panel.className = "level";
+    var h = document.createElement("h2"); h.textContent = me.name;
+    panel.appendChild(h);
+    var crumb = document.createElement("p");
+    crumb.className = "crumb";
+    crumb.textContent = me.sessions + " sessions \u00b7 " + me.hoursWk.toFixed(2) +
+      " hours a week \u00b7 figures " + (basis === "monthly" ? "per month" : "per week");
+    panel.appendChild(crumb);
+
+    var grid = document.createElement("div");
+    grid.className = "level-grid";
+    grid.appendChild(statCell("Evening cost", cash(me[basis].evening)));
+    grid.appendChild(statCell("Day cost", cash(me[basis].day)));
+    grid.appendChild(statCell("Total cost", cash(me[basis].total)));
+    var row = state.rates[nameKey(me.name)];
+    grid.appendChild(statCell("Evening rate", row ? cash(num(row.hourly_rate) || 0) : "\u2014"));
+    grid.appendChild(statCell("Day rate",
+      row ? cash(num(row.day_rate || row.hourly_rate) || 0) : "\u2014"));
+    panel.appendChild(grid);
+    fv.detail.appendChild(panel);
+
+    // Which sessions that time goes into, and whether those sessions earn.
+    var mine = state.sessions.filter(function (s) {
+      return s.coaches.some(function (c) { return nameKey(c) === nameKey(me.name); });
+    });
+    var wrap = document.createElement("div");
+    wrap.className = "level";
+    var h2 = document.createElement("h2");
+    h2.textContent = "Sessions " + me.name + " is on";
+    h2.style.fontSize = "1.05rem";
+    wrap.appendChild(h2);
+
+    var scroll = document.createElement("div");
+    scroll.className = "bd-wrap";
+    var t = document.createElement("table");
+    t.className = "bd";
+    t.innerHTML = "<thead><tr><th>Session</th><th>Day</th>" +
+      "<th>" + me.name + "'s cost</th><th>Session profit</th></tr></thead>";
+    var tb = document.createElement("tbody");
+
+    mine.map(function (s) {
+      var f = state.financials[s.id] || {};
+      var ev = !isDay(s);
+      var per = String(f.period || "").toLowerCase();
+      var to = basis === "monthly" ? (per === "weekly" ? WEEKS : 1)
+                                   : (per === "monthly" ? 1 / WEEKS : 1);
+      var rates = s.coaches.map(function (c) { return rateFor(c, ev); });
+      var tot = rates.reduce(function (a, b) { return a + b; }, 0);
+      var i = 0;
+      s.coaches.forEach(function (c, k) { if (nameKey(c) === nameKey(me.name)) i = k; });
+      var share = tot > 0 ? rates[i] / tot : 1 / s.coaches.length;
+      return { s: s, cost: (num(f.coach_cost) || 0) * share * to,
+               profit: (num(f.profit) || 0) * to };
+    }).sort(function (a, b) { return b.cost - a.cost; }).forEach(function (r) {
+      var tr = document.createElement("tr");
+      var td = document.createElement("td");
+      td.className = "name"; td.textContent = r.s.name;
+      tr.appendChild(td);
+      var dd = document.createElement("td");
+      dd.textContent = r.s.day + " " + r.s.time;
+      dd.style.textAlign = "left";
+      tr.appendChild(dd);
+      var cc = document.createElement("td");
+      cc.textContent = cash(r.cost); cc.style.fontWeight = "600";
+      tr.appendChild(cc);
+      var pc = document.createElement("td");
+      pc.textContent = cash(r.profit);
+      pc.className = r.profit >= 0 ? "pos" : "neg";
+      tr.appendChild(pc);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+    fv.detail.appendChild(wrap);
+  }
+
   function selectNode(key) {
+    if (key === "coaches" || key.indexOf("c:") === 0) {
+      fv.node = { key: key, label: "By coach", coachView: true };
+      renderPickers(fv.node);
+      renderHeadCards();
+      if (key === "coaches") renderCoaches();
+      else renderCoachDetail(key.slice(2));
+      return;
+    }
     var node = fv.nodes[key] || fv.nodes.all;
     fv.node = node;
     renderPickers(node);
@@ -1289,7 +1536,8 @@
 
   function renderFinView() {
     buildTree();
-    selectNode(fv.node && fv.nodes[fv.node.key] ? fv.node.key : "all");
+    selectNode(fv.node && (fv.node.coachView || fv.nodes[fv.node.key])
+                 ? fv.node.key : "all");
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (b) {

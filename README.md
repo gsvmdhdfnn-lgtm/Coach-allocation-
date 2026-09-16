@@ -222,6 +222,26 @@ for day rows. That is why `client` exists: City of London Freemen's is both a
 venue for the evening Academy and a separate day-school customer, and grouping
 by venue would silently merge them.
 
+### By coach
+
+A third block in the first dropdown, alongside the evening categories and the
+day schools. It answers where the coaching budget goes rather than how a
+session performs, so it is a table of the whole team rather than a drill-down.
+
+Each session's coach cost is split between the people on it in proportion to
+their rates, and hours divide by the groups sharing the slot — a coach covering
+four classes in one hour is credited with one hour, not four. The test for this
+is that the allocation lands back on reality: Josh comes out at 8.5 hours a
+week and GBP4,000 a month, which is his actual salary.
+
+Clicking a coach shows the sessions their time goes into, with their share of
+each session's cost next to that session's profit — the question being whether
+the expensive people are on the sessions that earn.
+
+Revenue and profit are deliberately not attributed to individual coaches. A
+session with two coaches would have to count its profit twice, and neither
+number would mean anything.
+
 ## Replacing the logo
 
 Drop a new `je-logo.png` in beside the others, keeping the name. The header
