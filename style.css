@@ -21,6 +21,9 @@
   --accent-bg:  #e6ecf8;
   --positive:   #1f7a4c;
   --negative:   #b3322e;
+  --warn:       #9a5a12;
+  --warn-ink:   #ffffff;
+  --negative-ink: #ffffff;
   --shadow:     0 1px 2px rgba(22, 35, 61, .05), 0 6px 20px rgba(22, 35, 61, .07);
   --shadow-lift:0 2px 6px rgba(22, 35, 61, .08), 0 14px 34px rgba(22, 35, 61, .12);
   --radius:     14px;
@@ -42,6 +45,9 @@
     --accent-bg:  #223052;
     --positive:   #5fcb94;
     --negative:   #f08a8a;
+    --warn:       #e8b06a;
+    --warn-ink:   #241a0c;
+    --negative-ink: #2a0f0f;
     --shadow:     0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .3);
     --shadow-lift:0 2px 6px rgba(0, 0, 0, .35), 0 14px 34px rgba(0, 0, 0, .45);
   }
@@ -332,6 +338,13 @@ body {
   white-space: nowrap;
 }
 .tag.tag-accent { background: var(--brand-lime); color: #16233d; }
+.card-theme {
+  align-self: center;
+  font-size: .82rem;
+  font-weight: 650;
+  color: var(--brand-blue);
+}
+@media (prefers-color-scheme: dark) { .card-theme { color: var(--accent); } }
 
 .card-time {
   flex: none;
@@ -712,6 +725,61 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
   table.bd th, table.bd td { padding: 9px 10px; }
 }
 
+/* Custom filter — day, time, venue; independent of the tree below */
+.fin-filter {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin-bottom: 22px;
+}
+.fin-filter-title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .015em;
+  color: var(--brand-blue);
+}
+@media (prefers-color-scheme: dark) { .fin-filter-title { color: var(--accent); } }
+.fin-filter-sub { margin: 0 0 16px; font-size: .86rem; color: var(--ink-faint); }
+
+.filter-days { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.day-btn, .hb-jump-btn {
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.day-btn:hover, .hb-jump-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-btn.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .day-btn.is-on { color: #0c1a16; } }
+
+.filter-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.filter-line .fin-select { width: auto; flex: 1 1 200px; max-width: 320px; }
+.filter-line input[type="time"], .filter-line input[type="date"] {
+  font: inherit;
+  padding: 11px 13px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.filter-to { font-size: .85rem; color: var(--ink-faint); }
+.filter-clear { margin-left: auto; }
+
+@media (max-width: 560px) {
+  .filter-line { align-items: stretch; }
+  .filter-clear { margin-left: 0; }
+}
+
 /* Cascading breakdown pickers */
 .fin-pickers {
   display: flex;
@@ -721,3 +789,398 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
 }
 .fin-step { min-width: 0; flex: 1 1 210px; max-width: 320px; }
 .fin-step .picker-label { display: block; margin-bottom: 7px; }
+
+/* ================================= Hub ================================= */
+
+/* The nav wraps on a phone; the owner button is pushed away from the
+   coach-facing ones so the split is obvious at a glance. */
+.views { flex-wrap: wrap; align-items: center; }
+.views-gap { flex: 1 1 auto; min-width: 0; }
+.view-btn-owner { display: inline-flex; align-items: center; gap: 7px; }
+.view-btn-owner .lock { width: 13px; height: 13px; flex: none; opacity: .75; }
+@media (max-width: 560px) {
+  /* Let the coach-facing buttons share the width evenly over two rows, and
+     keep Financials on a line of its own so the split still reads. */
+  .views { gap: 6px; }
+  .views .view-btn { flex: 1 1 auto; padding: 9px 10px; font-size: .86rem; }
+  .views-gap { flex-basis: 100%; height: 0; }
+  .view-btn-owner { justify-content: center; }
+}
+
+.hero { margin: 28px 0 26px; }
+.hero h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  font-size: clamp(1.5rem, 4.6vw, 2.1rem);
+  line-height: 1.1;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+.hero p { margin: 0; max-width: 62ch; color: var(--ink-soft); font-size: 1rem; }
+
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 30px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 2px solid var(--brand-lime);
+}
+.hero-stat { display: flex; align-items: baseline; gap: 7px; }
+.hero-stat strong {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.hero-stat span { color: var(--ink-faint); font-size: .9rem; }
+
+.tiles {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.tile {
+  font: inherit;
+  text-align: left;
+  position: relative;
+  display: block;
+  padding: 20px 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: box-shadow .16s, border-color .16s, transform .16s;
+}
+.tile:hover { border-color: var(--accent); box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
+.tile-icon {
+  width: 24px; height: 24px;
+  display: block;
+  margin-bottom: 12px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tile h3 { margin: 0 0 6px; font-size: 1.06rem; font-weight: 640; color: var(--ink); }
+.tile p { margin: 0; font-size: .92rem; color: var(--ink-soft); line-height: 1.5; }
+
+/* The financial tile belongs to the same hub but not to the same audience. */
+.tile-owner { background: var(--line-soft); border-style: dashed; }
+.tile-flag {
+  position: absolute;
+  top: 14px; right: 14px;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--surface);
+}
+
+.sec-head { margin: 28px 0 22px; }
+.sec-head h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+.sec-head p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+
+.empty { color: var(--ink-faint); font-size: .95rem; }
+
+/* ------------------------------- venues ------------------------------- */
+
+.vcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 15px 18px;
+  margin-bottom: 10px;
+}
+.vcard-head { display: flex; align-items: center; gap: 14px; }
+.vcard-title { min-width: 0; flex: 1 1 auto; }
+.vcard-title h3 { margin: 0; font-size: 1.05rem; font-weight: 640; color: var(--ink); }
+.vcard-addr { margin: 4px 0 0; font-size: .9rem; color: var(--ink-faint); overflow-wrap: anywhere; }
+.vcard-map {
+  flex: none;
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+.vcard-map:hover { border-color: var(--accent); background: var(--accent-bg); }
+.vcard .card-facts { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+
+/* ------------------------------ handbook ------------------------------ */
+
+.hb-jump { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+
+.hb-group { margin-bottom: 30px; scroll-margin-top: 16px; }
+.hb-section {
+  margin: 0 0 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--brand-lime);
+}
+.hb-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.hb-item h4 { margin: 0 0 8px; font-size: 1.02rem; font-weight: 640; color: var(--ink); }
+.hb-item p { margin: 0 0 10px; color: var(--ink-soft); font-size: .95rem; line-height: 1.6; }
+.hb-item p:last-child { margin-bottom: 0; }
+.hb-item a { color: var(--accent); overflow-wrap: anywhere; }
+.prose-list { margin: 0 0 10px; padding-left: 20px; color: var(--ink-soft); font-size: .95rem; line-height: 1.6; }
+.prose-list:last-child { margin-bottom: 0; }
+.prose-list li { margin-bottom: 5px; }
+
+.demo-note {
+  margin: 0 0 16px;
+  padding: 9px 13px;
+  border-left: 3px solid var(--brand-lime);
+  background: var(--line-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--ink-faint);
+  font-size: .86rem;
+}
+
+/* ----------------------------- resources ----------------------------- */
+
+.rgrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /* Cards size to their own content - a one-line card next to a poster
+     should not be stretched into a tall empty box. */
+  align-items: start;
+}
+/* A term plan is landscape and full of small text, so it earns the width of
+   two text cards. Browsers without :has() just show it at one column. */
+@media (min-width: 700px) {
+  .rcard:has(.rcard-img) { grid-column: span 2; }
+}
+.rcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .16s, border-color .16s, transform .16s;
+}
+a.rcard:hover { border-color: var(--accent); box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .rcard { transition: none; }
+  a.rcard:hover { transform: none; }
+}
+
+/* The posters are dark artwork, so they sit on their own dark mat rather
+   than glowing against a white card. */
+.rcard-img {
+  background: #0e1512;
+  border-bottom: 1px solid var(--line);
+}
+.rcard-img img { display: block; width: 100%; height: auto; }
+
+.rcard-body { padding: 15px 17px 17px; }
+.rcard-body h4 { margin: 0 0 6px; font-size: 1rem; font-weight: 640; color: var(--ink); }
+.rcard-body p { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--ink-soft); }
+.rcard-go {
+  display: inline-block;
+  margin-top: 11px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.rcard-go::after { content: " →"; }
+
+/* --------------------------- who is looking --------------------------- */
+
+.signin {
+  margin-top: 26px;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  max-width: 560px;
+}
+.signin h3 { margin: 0 0 6px; font-size: 1.02rem; font-weight: 640; color: var(--ink); }
+.signin p { margin: 0 0 14px; font-size: .92rem; color: var(--ink-soft); line-height: 1.55; }
+.signin-form { display: flex; gap: 9px; flex-wrap: wrap; }
+.signin-input {
+  flex: 1 1 170px;
+  min-width: 0;
+  font: inherit;
+  font-size: 1rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.signin-input::placeholder { letter-spacing: normal; text-transform: none; color: var(--ink-faint); }
+.signin-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.signin .pw-error { margin-top: 10px; }
+
+.whoami {
+  margin: 24px 0 0;
+  font-size: .9rem;
+  color: var(--ink-faint);
+}
+.whoami strong { color: var(--ink); font-weight: 640; }
+.linkish {
+  font: inherit;
+  font-size: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linkish:hover { color: var(--accent-ink); }
+
+/* ------------------------------ the week ------------------------------ */
+
+.weekbar { margin: 26px 0 18px; }
+.weekpick { max-width: 420px; }
+.weekpick .picker-label { display: block; margin-bottom: 7px; }
+
+.weektheme {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+  padding-top: 13px;
+  border-top: 2px solid var(--brand-lime);
+}
+.weektheme-no {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.weektheme-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+/* A session that is not simply "yours, as usual" says so across the top of
+   the card, before the name. A small tag among the age group and category
+   tags got skimmed straight past, which for "do not turn up" is no good. */
+.card-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 10px 18px;
+  font-size: .8rem;
+  line-height: 1.35;
+}
+.card-status .what {
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.card-status .why { font-weight: 600; opacity: .88; }
+
+.st-off      { background: var(--negative);    color: var(--negative-ink); }
+.st-covered  { background: var(--warn);        color: var(--warn-ink); }
+.st-covering { background: var(--brand-lime);  color: #16233d; }
+.st-extra    { background: var(--accent);      color: #fff; }
+@media (prefers-color-scheme: dark) { .st-extra { color: #0c1a16; } }
+
+/* A cancelled session stays on the list. Vanishing reads as "deleted", and
+   a coach who assumes that turns up anyway. */
+.card.is-off { background: var(--line-soft); }
+.card.is-off .card-title h3,
+.card.is-off .card-time .t { text-decoration: line-through; color: var(--ink-faint); }
+
+/* Covered is not faded: fading makes it harder to read, which is the
+   opposite of what "someone else has this" needs to be. A stripe does the
+   work instead. */
+.card.is-handed-over { border-left: 4px solid var(--warn); }
+.card.is-cover       { border-left: 4px solid var(--brand-lime); }
+.card.is-extra       { border-left: 4px solid var(--accent); }
+.card.is-off         { border-left: 4px solid var(--negative); }
+
+/* A school not being on this week is not an alarm - it is the plan, same as
+   any other week that does not have a Tuesday session. Text, not a banner. */
+.term-note {
+  margin: 8px 0 0;
+  font-size: .87rem;
+  color: var(--ink-faint);
+}
+
+.hcard-thisweek {
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--accent-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.hcard-thisweek span:first-child { color: var(--ink-soft); font-weight: 500; }
+.hcard-thisweek .value.pos, .hcard-thisweek .pos { color: var(--positive); }
+.hcard-thisweek .value.neg, .hcard-thisweek .neg { color: var(--negative); }
+
+/* ------------------------------ overheads ------------------------------ */
+
+.hcard-caption {
+  margin-top: -6px;
+  color: var(--ink-faint);
+  font-size: .78rem;
+  font-style: italic;
+}
+.hcard-oneoff {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: .82rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}

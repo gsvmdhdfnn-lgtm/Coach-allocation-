@@ -5,11 +5,23 @@ conversation gets lost, and that anyone picking this up later — David, Josh,
 or me in a fresh session — can see where things stand without re-reading
 everything.
 
-Last updated: 16 September 2026 (late — a long session)
+Last updated: 17 September 2026
 
 ---
 
 ## Done and live
+
+**Promoted from `preview/` to the live site on 17 September 2026** — the
+Coaches Hub layout below, and everything built on top of it since, is now
+what the team actually sees. `preview/` stays in place as the staging area
+for whatever gets built next (see its README).
+
+One thing deliberately not turned on as part of this promotion: **coach
+codes**. `coachCodes` in `config.js` ships empty, so nobody has a
+personalised `#me=` link yet — everyone lands on the whole-team view and
+picks their name from the dropdown, exactly as before. Nothing is broken
+by this; it's a genuinely separate, later step. Generating and handing out
+real codes (via `addCoachCodes` in `Add hub tabs.gs`) is next.
 
 - Coach schedule — look up any coach, see their week, read live from the sheet
 - Financials behind a password: summary, cascading drill-down, by-coach costs
@@ -17,11 +29,6 @@ Last updated: 16 September 2026 (late — a long session)
   `coach_groups` and `venue_groups` derived, Josh and David's rates from
   salary ÷ tracked hours
 - Brand applied, logo in the masthead
-
-## Done, sitting in the preview
-
-At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
-
 - Home page and section nav — Home, Schedule, Venues, Handbook, Financials
 - Venues section, built from the schedule
 - Handbook section, driven from an `Info` tab
@@ -60,41 +67,47 @@ At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
   Freemen's evening club and the Freemen's school coaching contract stay
   two different answers, on purpose — see the roadmap entry further down
   for why.
+- Real handbook and venue content filled in (Info, Venue info, Resources,
+  Calendar, Changes, Terms tabs all published and wired in)
+- Per-category `Themes` tab — Pre Academy/TDC/Academy each get their own
+  weekly theme, shown on each session's own card rather than one week-wide
+  banner
+- Session cards: the old category/programme tags (U10, Academy, Evening)
+  replaced with the week's theme in blue near the title, age-group tag
+  kept
+- **Financial accuracy work**, all reading `Terms`/`Changes` so the
+  schedule and the money can never disagree:
+  - "This week (actual)" on the head cards — a real, term-aware figure
+    alongside (never replacing) the typical weekly/monthly one.
+    `monthly`-billed sessions smooth revenue through a mid-season gap
+    like half term (only stopping outside the whole season); `weekly`
+    sessions are pay-as-you-go, gated exactly like cost. Coach/venue cost
+    always drops to £0 for a week that isn't genuinely happening,
+    whatever the billing period.
+  - **The P&L archive** — a permanent, write-once weekly record
+    (`Weekly P&L archive.gs`, delivered separately, not in this repo).
+    Archives one real, finished week at a time, on a Monday trigger;
+    `backfillArchive()` catches up any weeks that happened before the
+    archive was first set up. A price or headcount change later can never
+    reshape a week already archived — confirmed directly with David as
+    the whole point of it.
+  - **Period totals** on the Financials page — pick any date range, see
+    Actual (locked, from the archive) + Scheduled (a live projection for
+    this week and beyond) + Total, never blended.
 
 ## Next — tomorrow, at the laptop
 
-1. **Run `Add hub tabs.gs`** — creates the `Info` and `Venue info` tabs
-2. **Publish both as CSV**, links into `config.js`
-3. **Write the handbook** — the non-negotiables first, then the rest
-4. **Fill in `Venue info`** — the Freemen's alias, then addresses and postcodes
-   (without them, Directions is a name search and is weak for the
-   single-word venues like Milbourne and Parkside)
-5. **Decide whether to promote the preview** over the live site — does
-   NOT require any of the other steps on this list first. Every new section
-   checks whether its tab is configured and quietly stays hidden if not, so
-   promoting today with nothing else done would just look like a cleaner
-   version of the current live site: Schedule as now, Venues working
-   already (it builds from Sessions.csv alone), Handbook/Resources/the week
-   picker simply absent from the nav, everyone seeing the whole-team view
-   with an empty "got a code?" box. Nothing half-finished, nothing broken.
-   The one thing worth sequencing deliberately is `addCoachCodes` - not
-   needed to promote the site, but needed before handing an actual coach a
-   personal link, since until then there is nothing for the link to point
-   to. Everything else can be filled in at whatever pace suits, each
-   feature switching on the moment its CSV link lands in config.js.
-6. **Fill in the `Resources` tab** — the term posters. Needs somewhere the
-   images can be loaded from directly; a plain Drive sharing link will not
-   do it (the script's note on the `image_url` header explains the
-   workaround).
-7. **Run `addCoachCodes`** in the same script — adds `code` and `owner`
+1. **Tidy the just-backfilled P&L archive** — a few schools were included
+   in the 31 Aug / 7 Sept archived weeks before they'd actually started.
+   Delete just those specific rows by hand, and fix their real start dates
+   on the `Terms` tab so future weeks archive correctly on their own.
+2. **Run `addCoachCodes`** in `Add hub tabs.gs` — adds `code` and `owner`
    columns to the Coaches tab and fills in a code for everyone. Put YES
    against David and Josh. Then each coach's link is the site address plus
-   `#me=THEIRCODE`.
-8. **Fill in `Calendar` and `Changes`** — the script creates both with the
-   next twelve weeks seeded and three example rows to delete.
-   Also creates **`Terms`** — leave it empty unless a specific school's term
-   genuinely differs from the rest; most schools will never need a row.
-9. **Add an `Ideas` tab** and show it in the hub behind the Financials
+   `#me=THEIRCODE`. Deliberately deferred out of the promotion — the site
+   works fine without it, coaches just pick their name from the dropdown
+   until this is done.
+3. **Add an `Ideas` tab** and show it in the hub behind the Financials
    password — agreed. Same pattern as the Handbook, just gated, so David can
    add a row from his phone in the Sheets app and both he and Josh see the
    list. Replaces this file as the place ideas get captured; this file stays

@@ -1,17 +1,21 @@
-# Preview — the Team Hub layout
+# Preview — where the next change gets built
 
 This folder is a **complete second copy of the site**, served at
 `…/Coach-allocation-/preview/`. The live site at the root is untouched by
 anything in here, so this can be poked at, broken and changed without any
 risk to what the team is using.
 
+As of the last promotion, the two copies are identical — everything below
+is already live. This folder stays around as the staging area for whatever
+gets built next; once it's signed off, `index.html`, `app.js` and
+`style.css` get copied up to the root again (see the root `README.md`'s
+"Building the next change" section for the exact steps), and this folder
+moves ahead of live again.
+
 Both copies share `../config.js` and `../je-logo.png`, so there is one set of
 sheet links and one password — no duplication of the encrypted block.
 
-## What is different from the live site
-
-The live site opens straight into a coach dropdown. This one opens on a
-**home page** and treats the schedule as one section among several:
+## Sections
 
 | Section | Where its content comes from |
 | --- | --- |
@@ -386,8 +390,10 @@ so nobody's link breaks. The alphabet has no `0`, `O`, `1`, `I` or `L` in it,
 and nothing is derived from the name — a coach should not be able to guess a
 colleague's.
 
-`coachCodes` in `config.js` does the same thing without the sheet, which is
-what the preview is using at the moment.
+`coachCodes` in `config.js` does the same thing without the sheet. Not set
+up yet — it currently ships empty, so everyone lands on the whole-team
+view; see the root `README.md` for how this behaves until real codes are
+added.
 
 ### What a code is not
 
@@ -435,16 +441,28 @@ blank line starts a new paragraph, lines beginning with `-` become a
 bulleted list, and phone numbers, email addresses and web links become
 tappable.
 
-## Promoting it to the live site
+## Promoting a change to the live site
 
-When the layout is signed off, move these three files up a level, delete the
-folder and drop the preview banner:
+When a change here is signed off, copy the three files up a level rather
+than moving them — this folder stays in place as the staging area for
+whatever comes next:
 
 ```
-git mv preview/index.html preview/app.js preview/style.css .
-git rm -r preview
-# then remove the .preview-flag div from index.html
+cp preview/index.html index.html
+cp preview/app.js app.js
+cp preview/style.css style.css
 ```
 
-The paths `../config.js` and `../je-logo.png` become `config.js` and
-`je-logo.png` again.
+Then, in the copied `index.html`:
+
+- remove the `.preview-flag` div
+- remove the `demo-content.js` script tag (and don't copy the sample CSVs
+  or sample poster — the real tabs are already wired into `config.js`)
+- change `../je-logo.png` to `je-logo.png` and `../config.js` to
+  `config.js`
+- re-stamp the `?v=` query params on `style.css`, `config.js` and `app.js`
+  to the current commit hash
+
+Test the result before pushing — in particular that the site still works
+sensibly with `coachCodes` empty (a coach picks their name from the
+dropdown rather than landing on a personalised link).

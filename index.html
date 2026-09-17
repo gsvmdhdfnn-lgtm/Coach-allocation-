@@ -3,34 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Coach Schedule</title>
-<meta name="description" content="Look up any coach and see every session they run this week.">
+<title>Josh Evans Soccer School — Coaches Hub</title>
+<meta name="description" content="Schedules, venues and everything the coaching team needs for the week.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%233058a8'/><circle cx='16' cy='16' r='14' fill='none' stroke='%23d0d850' stroke-width='2'/><polygon points='16,8 22.6,12.8 20.1,20.6 11.9,20.6 9.4,12.8' fill='%23f4f4dc'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<!-- Version stamps: GitHub Pages caches for ten minutes, and a browser
+     that holds a stale copy of one of these while taking a fresh copy of
+     another gets a mix that works nowhere. Bumped on every deploy by
+     tools/stamp.sh. -->
+<link rel="stylesheet" href="style.css?v=920bf43">
 </head>
 <body>
 
 <header class="masthead">
   <div class="wrap masthead-inner">
     <div class="masthead-text">
-      <h1>Coach Schedule</h1>
-      <p class="masthead-sub">Every session, by coach, for the week.</p>
+      <h1>Coaches Hub</h1>
+      <p class="masthead-sub">Schedules, venues and everything you need for the week.</p>
     </div>
     <img class="masthead-logo" src="je-logo.png" width="480" height="323"
          alt="Josh Evans Soccer School">
   </div>
 </header>
 
-<nav class="views wrap" id="views" hidden>
-  <button type="button" class="view-btn is-on" data-view="schedule">Schedule</button>
-  <button type="button" class="view-btn" data-view="financials">Financials</button>
+<nav class="views wrap" id="views" hidden aria-label="Sections">
+  <button type="button" class="view-btn is-on" data-view="home">Home</button>
+  <button type="button" class="view-btn" data-view="schedule">Schedule</button>
+  <button type="button" class="view-btn" data-view="venues">Venues</button>
+  <button type="button" class="view-btn" data-view="handbook" id="nav-handbook" hidden>Handbook</button>
+  <button type="button" class="view-btn" data-view="resources" id="nav-resources" hidden>Resources</button>
+  <span class="views-gap" aria-hidden="true"></span>
+  <button type="button" class="view-btn view-btn-owner" data-view="financials">
+    <svg viewBox="0 0 16 16" aria-hidden="true" class="lock"><path d="M4.5 7V5a3.5 3.5 0 017 0v2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="3" y="7" width="10" height="7" rx="1.6" fill="currentColor"/></svg>
+    Financials
+  </button>
 </nav>
 
 <main class="wrap" id="main">
+
+  <!-- Home -->
+  <section id="home" hidden>
+    <div class="hero">
+      <h2 id="hero-title">Josh Evans Soccer School</h2>
+      <p id="hero-blurb">Everything the coaching team needs, in one place. The schedule
+         comes straight from the office spreadsheet, so what you see here is what is booked.</p>
+      <div class="hero-stats" id="hero-stats"></div>
+    </div>
+    <div class="tiles" id="home-tiles"></div>
+    <div id="home-signin"></div>
+  </section>
+
+  <!-- Venues -->
+  <section id="venues" hidden>
+    <div class="sec-head">
+      <h2>Venues</h2>
+      <p>Everywhere we coach, and how to find it.</p>
+    </div>
+    <div id="venue-list"></div>
+  </section>
+
+  <!-- Handbook -->
+  <section id="handbook" hidden>
+    <div class="sec-head">
+      <h2>Handbook</h2>
+      <p>The things worth knowing — kit, absence, who to call.</p>
+    </div>
+    <div id="handbook-body"></div>
+  </section>
+
+  <!-- Resources -->
+  <section id="resources" hidden>
+    <div class="sec-head">
+      <h2>Resources</h2>
+      <p>Session plans, term themes and anything else worth having to hand.</p>
+    </div>
+    <div id="resource-body"></div>
+  </section>
 
   <!-- Coach picker -->
   <section class="picker" id="picker" hidden>
@@ -61,6 +112,7 @@
   </div>
 
   <section id="results" hidden>
+    <div class="weekbar" id="weekbar" hidden></div>
     <div class="summary" id="summary"></div>
     <div id="days"></div>
   </section>
@@ -75,6 +127,20 @@
 
     <div class="head-cards" id="head-cards"></div>
 
+    <section class="fin-filter">
+      <h2 class="fin-filter-title">Period totals</h2>
+      <p class="fin-filter-sub">Pick any date range and see what actually came in, split honestly from what's still to come — never blended into one number.</p>
+      <div id="period-controls"></div>
+      <div id="period-result"></div>
+    </section>
+
+    <section class="fin-filter">
+      <h2 class="fin-filter-title">Custom filter</h2>
+      <p class="fin-filter-sub">Any day, time window or venue, on its own or combined — cuts across the programme tree below rather than following it. For example every Monday session at one venue, or every session between 3 and 4:30pm.</p>
+      <div id="fin-filter-controls"></div>
+      <div id="fin-filter-result"></div>
+    </section>
+
     <div class="fin-pickers" id="fin-pickers"></div>
 
     <div id="fin-detail"></div>
@@ -83,7 +149,7 @@
 </main>
 
 <footer class="footer wrap">
-  <p>Data comes live from the coaching schedule sheet. To change a session, edit the sheet — no need to touch this site.</p>
+  <p>Everything on this page is read live from the office spreadsheet. To change a session, a venue or anything in the handbook, edit the sheet — nobody needs to touch this site.</p>
 </footer>
 
 <!-- Password dialog -->
@@ -103,7 +169,7 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js?v=920bf43"></script>
+<script src="app.js?v=920bf43"></script>
 </body>
 </html>
