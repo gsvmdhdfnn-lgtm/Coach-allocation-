@@ -62,6 +62,17 @@ window.APP_CONFIG = {
      holiday is one row, not eight. */
   changesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1549675202&single=true&output=csv",
 
+  /* Published CSV URL for the "Themes" tab — this week's curriculum focus,
+     per programme. Columns: week_commencing, category, theme.
+     Different programmes (Pre Academy, TDC, Academy...) run their own
+     progression in the same week, so a theme is not one fact per week —
+     it is one fact per week PER category, shown on each session's own
+     card rather than once for the whole week. `category` must match a
+     session's `category` column on Sessions exactly (case/spacing don't
+     matter). Optional: without it, no theme shows anywhere — nothing
+     breaks, the fact is simply absent. */
+  themesCsvUrl: "",
+
   /* Published CSV URL for the "Terms" tab — which weeks each school's term
      actually runs. Columns: school, starts, ends, note.
      This is NOT for a one-off cancellation (that is Changes) — it is for a

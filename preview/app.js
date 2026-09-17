@@ -27,6 +27,7 @@
     calendar: null,      // "YYYY-MM-DD" (a Monday) -> { weekNo, label, theme, running }
     changes: null,       // the exceptions log, as rows
     terms: null,         // per-school term windows, as rows
+    themes: null,        // "YYYY-MM-DD" -> category key -> theme, per programme
     week: null,          // the Monday currently being shown
     codes: null,         // CODE -> { name, owner }
     me: null             // whoever is signed in, if anyone
@@ -513,13 +514,40 @@
               };
             });
           })
+        : Promise.resolve(),
+      /* Different programmes (Pre Academy, TDC, Academy...) run their own
+         curriculum in the same week, so a week's theme is not one fact -
+         it is one fact per category. Keyed the same way as Calendar
+         (week -> ...) with a second key for the category, looked up
+         against each session's own category rather than shown once for
+         the whole week. */
+      hasTab(CFG.themesCsvUrl)
+        ? fetchCsv(CFG.themesCsvUrl, "Themes").then(function (rows) {
+            var map = Object.create(null);
+            toObjects(rows, ["week_commencing", "category"], "Themes").forEach(function (r) {
+              var d = parseDay(r.week_commencing);
+              if (!d) return;
+              var wk = isoDay(mondayOf(d));
+              if (!map[wk]) map[wk] = Object.create(null);
+              map[wk][nameKey(r.category)] = String(r.theme || "").trim();
+            });
+            state.themes = map;
+          })
         : Promise.resolve()
     ];
     return Promise.all(jobs).catch(function (e) {
       console.warn("Week data could not be loaded:", e);
       state.calendar = state.calendar || null;
       state.changes = state.changes || null;
+      state.themes = state.themes || null;
     });
+  }
+
+  /** This session's theme for the currently selected week, if one is set. */
+  function themeFor(session) {
+    if (!state.themes || !state.week || !session.category) return "";
+    var wk = state.themes[state.week];
+    return (wk && wk[nameKey(session.category)]) || "";
   }
 
   function hasWeeks() { return !!(state.calendar || state.changes); }
@@ -1037,7 +1065,6 @@
 
     var weeks = weekChoices();
     if (!state.week) state.week = weeks[0].iso;
-    var current = weeks.filter(function (w) { return w.iso === state.week; })[0] || weeks[0];
 
     var label = mk("label", "picker-label", "Week");
     label.htmlFor = "week-select";
@@ -1059,13 +1086,6 @@
     box.appendChild(sel);
     el.weekbar.appendChild(box);
 
-    if (current.theme) {
-      var th = mk("p", "weektheme");
-      th.appendChild(mk("span", "weektheme-no",
-        current.weekNo ? "Week " + current.weekNo : "This week"));
-      th.appendChild(mk("span", "weektheme-name", current.theme));
-      el.weekbar.appendChild(th);
-    }
     el.weekbar.hidden = false;
   }
 
@@ -1163,6 +1183,11 @@
       facts.appendChild(fact("Venue", session.venue));
     }
     if (session.address) facts.appendChild(fact("Address", session.address));
+
+    /* Each programme runs its own curriculum, so the theme belongs to this
+       one session's category, not the whole week. */
+    var theme = themeFor(session);
+    if (theme) facts.appendChild(fact("This week", theme));
 
     /* Who is actually on it this week, which is not always the base schedule. */
     var onIt = (item && item.coaches) || session.coaches;
