@@ -603,12 +603,15 @@
   }
 
   /**
-   * Whether this session is actually happening this real week - out of
+   * Whether this session is actually being COACHED this real week - out of
    * term (Terms), or cancelled (Changes). A cover still counts as running
    * (same session, different coach, same money); only cancelled zeroes it.
-   * Used for the Financials page's "this week (actual)" figure, which is
-   * deliberately separate from the typical weekly/monthly figure rather
-   * than replacing it - one is "normally", the other is "right now".
+   *
+   * Deliberately not about revenue: on the Financials page this only gates
+   * coach cost and venue cost, never revenue, because a monthly
+   * subscription bills the same whether that month's weeks were 3-on-1-off
+   * or 4-on - confirmed with David directly. What it decides is whether
+   * anyone was actually paid to be there.
    */
   function sessionRunsThisWeek(s, iso) {
     var spans = schoolTerms(s);
@@ -1710,8 +1713,18 @@
          normally bring in" and never change with the calendar - that is
          on purpose, so promoting/renaming a school does not quietly move
          them. thisWeek is the separate, deliberately different question
-         "what does this actually bring in, this real week" - zeroed for
-         anything out of term or cancelled right now. */
+         "what does this actually bring in, this real week."
+         Confirmed with David: revenue runs on its own calendar, not the
+         coaching one - a monthly subscription is billed the same whether
+         a school's specific weeks that month were 3-on-1-off or 4-on, so
+         revenue is never zeroed by a term break or a Changes cancellation.
+         Coach and venue cost DO zero, because nobody is coaching and no
+         venue is being paid for on a week that is not actually happening.
+         So thisWeek.profit cannot be copied from the sheet's profit
+         column like the typical figures - it has to be worked out fresh
+         as revenue minus THIS WEEK's actual costs, which is why a real
+         break week correctly shows a HIGHER profit than usual: full
+         revenue, nothing paid out. */
       thisWeek: { gross:0, net:0, coach:0, venue:0, profit:0 }
     };
     var thisMonday = isoDay(mondayOf(new Date()));
@@ -1726,13 +1739,19 @@
                 coach: num(f.coach_cost) || 0, venue: num(f.venue_cost) || 0,
                 profit: num(f.profit) || 0 };
       a.participants += num(f.participants) || 0;
-      var runningNow = sessionRunsThisWeek(s, thisMonday);
+      var costsApply = sessionRunsThisWeek(s, thisMonday);
       Object.keys(v).forEach(function (k) {
         a.monthly[k] += v[k] * toM;
         a.weekly[k]  += v[k] * toW;
-        if (runningNow) a.thisWeek[k] += v[k] * toW;
       });
+      a.thisWeek.gross += v.gross * toW;
+      a.thisWeek.net   += v.net * toW;
+      if (costsApply) {
+        a.thisWeek.coach += v.coach * toW;
+        a.thisWeek.venue += v.venue * toW;
+      }
     });
+    a.thisWeek.profit = a.thisWeek.net - a.thisWeek.coach - a.thisWeek.venue;
     return a;
   }
 

@@ -231,15 +231,25 @@ purpose: it answers a steady-state question, not a this-instant one.
 
 **"This week (actual)"** is a second, separate figure on the same card,
 answering a genuinely different question: what does this actually bring
-in *this real week*, term breaks and cancellations included? A session
-whose school is on half term, or a session cancelled via `Changes` this
-week, contributes £0 to this figure while still counting normally in the
-typical one above it.
+in *this real week*?
 
-The two are never blended into one number - a coach or David glancing at
-the page should never have to guess which question a figure is answering.
-Always weekly, regardless of whether the card is showing per-week or
-per-month, since "this week" isn't a monthly idea.
+**Revenue and cost are NOT gated the same way - confirmed directly with
+David, worth being precise about since it is not the obvious answer.** A
+family's monthly subscription is billed the same whether that month's
+weeks were 3-on-1-off or 4-on, so **revenue never drops to £0** for a
+term break or a `Changes` cancellation - it always counts at the typical
+rate. **Coach cost and venue cost DO drop to £0** for a week that is
+genuinely not happening, because nobody is coaching and no venue is being
+paid for. So this figure's profit is not copied from the sheet's profit
+column - it is worked out fresh as revenue minus THIS WEEK's actual
+costs, and a real break week correctly shows a HIGHER profit than usual:
+full revenue, nothing paid out. That is a true fact about how the
+business runs, not a bug.
+
+The two figures are never blended into one number - a coach or David
+glancing at the page should never have to guess which question a figure
+is answering. Always weekly, regardless of whether the card is showing
+per-week or per-month, since "this week" isn't a monthly idea.
 
 **What it depends on:** `Terms` (a school's own term dates) and `Changes`
 (this week's one-off cancellations) - the exact same data already used for

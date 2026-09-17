@@ -446,6 +446,24 @@ archive mechanism once, and both the yearly forecast and the coach hours
 report read from and write to it - not two separate archives that could
 drift apart from each other.
 
+**Revenue and cost run on two different calendars - confirmed directly
+with David, and it is NOT the obvious answer, so worth getting precisely
+right wherever "this week" or "this term" gets calculated (the head
+cards' this-week figure, and later the archive itself).** A family's
+monthly subscription is billed the same whether that month's weeks were
+3-on-1-off or 4-on - **revenue never drops for a term break or a
+cancellation, it always counts at the typical rate.** Coach cost and
+venue cost DO drop to zero for a week that genuinely is not happening -
+nobody is coaching, no venue is being paid for. Consequence worth stating
+plainly since it looks wrong at a glance and is not: a genuine break week
+correctly shows HIGHER profit than a normal week, because full revenue
+still lands with nothing paid out against it. Already built this way on
+the head cards' "This week (actual)" figure (`sessionRunsThisWeek()` now
+gates coach/venue cost only, never revenue; `thisWeek.profit` is derived
+from revenue minus THIS WEEK's actual costs, not copied from the sheet's
+flat profit column). The archive, when built, has to write revenue and
+cost through this same split, not treat a session as one on/off switch.
+
 **How the rolling dropdown works, for the record (already built, needs
 nothing further):** `weekChoices()` computes from `new Date()` - "right
 now", read fresh on every page load, never a stored list. That is why it
