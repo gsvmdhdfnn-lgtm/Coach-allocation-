@@ -32,26 +32,26 @@ window.APP_CONFIG = {
      It is a separate tab from "Venues", which the financial formulas use —
      nothing here touches those. Leave empty until the tab is published.
      Columns: venue, address, postcode, parking, meeting_point, access, notes. */
-  venueInfoCsvUrl: "",
+  venueInfoCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1036824298&single=true&output=csv",
 
   /* Published CSV URL for the "Info" tab — the handbook. Public — safe to
      share. Optional: while this is empty the Handbook section is hidden
      entirely, so nobody sees an empty page.
      Columns: section, order, title, body. */
-  infoCsvUrl: "",
+  infoCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=705538022&single=true&output=csv",
 
   /* Published CSV URL for the "Resources" tab. Public — safe to share.
      Optional: while this is empty the Resources section is hidden entirely.
      Columns: section, order, title, description, url, image_url.
      `url` is what the card opens; `image_url` shows a picture on the card.
      Either, both or neither. */
-  resourcesCsvUrl: "",
+  resourcesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1101222874&single=true&output=csv",
 
   /* Published CSV URL for the "Calendar" tab — one row per week.
      Columns: week_commencing, week_no, label, theme, running.
      Optional: without it the schedule is the plain base week, with no
      week picker and no theme. */
-  calendarCsvUrl: "",
+  calendarCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1767672298&single=true&output=csv",
 
   /* Published CSV URL for the "Changes" tab — the exceptions, and only the
      exceptions. Columns: week_commencing, session_id, venue, client,
@@ -60,7 +60,7 @@ window.APP_CONFIG = {
      a session_id for one session, a venue or client for everywhere at that
      place, a coach_out for everything that coach was down for — so a week's
      holiday is one row, not eight. */
-  changesCsvUrl: "",
+  changesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1549675202&single=true&output=csv",
 
   /* Published CSV URL for the "Terms" tab — which weeks each school's term
      actually runs. Columns: school, starts, ends, note.
@@ -70,7 +70,7 @@ window.APP_CONFIG = {
      session's `client` column, or its `venue` when `client` is blank.
      No row for a school means no restriction — it runs whenever the base
      schedule says. Optional: without it nothing changes. */
-  termsCsvUrl: "",
+  termsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1472233165&single=true&output=csv",
 
   /* Published CSV URL for the "Overheads" tab — company-wide costs that do
      not belong to any one session: admin, insurance, payment processing
