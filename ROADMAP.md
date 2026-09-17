@@ -507,6 +507,17 @@ David: "I like that calendar link with the session."
    motivated to give it to the eleven who benefit, and it leaves a record
    that a WhatsApp message does not.
 5. **Holiday and cover requests** — same plumbing again, more edge cases.
+6. **Documents to fill in and send back — David's idea, same write door as
+   above, not a separate build.** A form attached to something on
+   Handbook/Resources (a kit order, a DBS check, whatever needs collecting)
+   that a coach fills in and submits, ticks off against their name once
+   done, and David gets a copy of. Mechanically the same as feedback and
+   holiday requests above - a coach-submitted message through the `doPost`
+   door - so it slots in alongside them rather than needing its own
+   plumbing. Cheap stopgap available right now, no build needed: a Google
+   Form linked from Resources, with an email-a-copy rule turned on, does
+   most of this today - it just lives outside the hub's own look rather
+   than inside it.
 
 ## Open questions
 
