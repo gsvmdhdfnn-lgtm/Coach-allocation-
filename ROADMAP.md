@@ -519,6 +519,24 @@ David: "I like that calendar link with the session."
    most of this today - it just lives outside the hub's own look rather
    than inside it.
 
+   **The mechanism, worked out so it isn't lost:** a form built into the
+   hub submits via `fetch()` to the `doPost` door rather than a normal
+   HTML form post (that only works talking to Google's own Forms). Apps
+   Script appends the submission as a row on its own tab - one tab per
+   form (`Conduct forms`, `New starters`) - which IS David's copy, not a
+   copy of one; an email-on-submit rule can also be added so he knows
+   without checking. The "ticked off" state is the hub reading that same
+   tab back and checking whether a row already matches the coach - present
+   means done.
+
+   **A new starter form is a different shape, not a variant of the
+   above.** Everything else here ticks off against a coach who already
+   exists and has a code; a new starter has neither yet, so their form
+   has to be reachable without one (a plain link, not gated behind
+   `#me=`), and there is nothing to tick against - the row that lands is
+   simply what David reads and acts on afterwards (add them to Coaches,
+   run `addCoachCodes` to give them a real link).
+
 ## Open questions
 
 Things I picked or guessed that are David's call:
