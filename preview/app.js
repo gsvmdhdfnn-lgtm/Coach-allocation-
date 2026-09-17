@@ -2563,6 +2563,10 @@
 
   function hasTab(url) { return !!url && !looksUnset(url); }
 
+  function slugify(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "section";
+  }
+
   /** One quiet line, so sample wording is never mistaken for the real thing. */
   function demoNote(parent, what) {
     if (!CFG.demoContent) return;
@@ -2959,11 +2963,32 @@
       bySection[sec].push(r);
     });
 
+    /* A jump link per section, built from whatever sections actually exist -
+       add a section in the sheet and it gets a link here for free, nothing
+       to keep in sync by hand. Not worth it for a single section. */
+    if (order.length > 1) {
+      var jump = mk("nav", "hb-jump");
+      jump.setAttribute("aria-label", "Jump to section");
+      order.forEach(function (sec) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "hb-jump-btn";
+        b.textContent = sec;
+        b.addEventListener("click", function () {
+          var target = document.getElementById("hb-" + slugify(sec));
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        jump.appendChild(b);
+      });
+      hub.handbookBody.appendChild(jump);
+    }
+
     order.forEach(function (sec) {
       var rows = bySection[sec].slice().sort(function (a, b) {
         return (num(a.order) || 0) - (num(b.order) || 0);
       });
       var group = mk("section", "hb-group");
+      group.id = "hb-" + slugify(sec);
       group.appendChild(mk("h3", "hb-section", sec));
       rows.forEach(function (r) {
         if (!String(r.title || "").trim() && !String(r.body || "").trim()) return;

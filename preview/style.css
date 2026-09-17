@@ -740,7 +740,7 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
 .fin-filter-sub { margin: 0 0 16px; font-size: .86rem; color: var(--ink-faint); }
 
 .filter-days { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.day-btn {
+.day-btn, .hb-jump-btn {
   font: inherit;
   font-size: .82rem;
   font-weight: 600;
@@ -751,7 +751,7 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
   color: var(--ink-soft);
   cursor: pointer;
 }
-.day-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-btn:hover, .hb-jump-btn:hover { border-color: var(--accent); color: var(--accent); }
 .day-btn.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (prefers-color-scheme: dark) { .day-btn.is-on { color: #0c1a16; } }
 
@@ -935,7 +935,9 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
 
 /* ------------------------------ handbook ------------------------------ */
 
-.hb-group { margin-bottom: 30px; }
+.hb-jump { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+
+.hb-group { margin-bottom: 30px; scroll-margin-top: 16px; }
 .hb-section {
   margin: 0 0 12px;
   font-size: .78rem;
