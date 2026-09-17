@@ -338,6 +338,13 @@ body {
   white-space: nowrap;
 }
 .tag.tag-accent { background: var(--brand-lime); color: #16233d; }
+.card-theme {
+  align-self: center;
+  font-size: .82rem;
+  font-weight: 650;
+  color: var(--brand-blue);
+}
+@media (prefers-color-scheme: dark) { .card-theme { color: var(--accent); } }
 
 .card-time {
   flex: none;

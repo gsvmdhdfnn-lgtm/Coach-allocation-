@@ -1144,22 +1144,16 @@
     h.textContent = session.name;
     title.appendChild(h);
 
-    // Age group, then category, then programme - skipping any that would
-    // only repeat what a tag already said ("School" alongside "Day").
+    // Age group, then this week's theme in place of the old category/
+    // programme tags - those mostly repeated what the title already said,
+    // the theme is the thing worth a coach's eye going to first.
     var tags = document.createElement("div");
     tags.className = "tags";
 
-    var shown = Object.create(null);
-    [[session.ageGroup, true], [session.category, false], [session.programme, false]]
-      .forEach(function (pair) {
-        var text = pair[0];
-        if (!text) return;
-        var k = nameKey(text);
-        if (shown[k]) return;
-        if (k === "day" && shown["school"]) return;
-        shown[k] = true;
-        tags.appendChild(tag(text, pair[1]));
-      });
+    if (session.ageGroup) tags.appendChild(tag(session.ageGroup, true));
+    var cardTheme = themeFor(session);
+    if (cardTheme) tags.appendChild(mk("span", "card-theme", cardTheme));
+
     if (tags.childNodes.length) title.appendChild(tags);
     top.appendChild(title);
 
@@ -1184,10 +1178,7 @@
     }
     if (session.address) facts.appendChild(fact("Address", session.address));
 
-    /* Each programme runs its own curriculum, so the theme belongs to this
-       one session's category, not the whole week. */
-    var theme = themeFor(session);
-    if (theme) facts.appendChild(fact("This week", theme));
+    /* The theme already shows once, in blue by the title - not repeated here. */
 
     /* Who is actually on it this week, which is not always the base schedule. */
     var onIt = (item && item.coaches) || session.coaches;
