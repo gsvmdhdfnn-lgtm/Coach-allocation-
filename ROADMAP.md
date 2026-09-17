@@ -548,7 +548,22 @@ Things I picked or guessed that are David's call:
   a minute".
 - ~~Nav order~~ DECIDED: happy with it as is.
 - Coach side is **open to anyone with the link**. Fine for now; changes when
-  coach codes arrive
+  coach codes arrive. **Raised by David, not yet decided:** should the BASE
+  link (no code) show only Home and nothing else - Schedule, Venues,
+  Handbook, Resources all hidden until a code is entered - rather than
+  today's fallback of the whole-team view plus a "got a code?" box?
+  Technically simple either way, it is only a change to which nav buttons
+  render before identity resolves, not a new mechanism. The trade-off to
+  weigh: a coach who has not entered their code yet (new, forgot it, on a
+  borrowed phone) currently still has a working schedule to look at; lock
+  it to Home-only and they see nothing until they sign in. Same honest
+  caveat as always either way - hiding the nav buttons is not real
+  security, the published CSVs are still fully readable underneath, it
+  only changes what the hub SHOWS. David's separate two points already
+  match what is built: entering a code gives that person their own app
+  (My week), and an owner code keeps everything - the whole team, every
+  schedule, Financials - never narrowed to "my week". No change needed for
+  those two.
 - Venues: bare name and a Directions button for venues with no detail.
   DECIDED - "should all get address and information eventually." Not a
   quick fill-in job (16 venues), but the direction is settled.
