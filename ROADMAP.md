@@ -464,6 +464,28 @@ from revenue minus THIS WEEK's actual costs, not copied from the sheet's
 flat profit column). The archive, when built, has to write revenue and
 cost through this same split, not treat a session as one on/off switch.
 
+**Overheads do NOT need their own archive - worked through with David,
+better than my first suggestion.** A session's Financials figures have no
+memory of their own, which is why they need a weekly archive at all.
+Overheads is different: it already carries its own `starts`/`ends` per
+row, so a term or year total can just sum each overhead's real
+contribution against its own dates, directly, with no separate write-once
+mechanism needed. Confirmed this avoids the trap of David's own proposed
+shortcut ("just subtract at the end") - using TODAY's figure smeared
+across a whole year would wrongly apply a rate to months that were
+actually charged differently, e.g. a salary rise in January should not
+count for the September figure. Fixed shape, reusing the existing "two
+spans, no gap needed" pattern already used for Terms and coach rates:
+
+- An ongoing cost that never changes: ONE row, `repeats` set, `starts`
+  filled in, `ends` left blank ("still going"). Never re-entered monthly.
+- A cost that changes partway through (a pay rise, a renewed premium at a
+  new price): close the old row off with `ends`, add a new row from the
+  change date, `ends` blank again. Two rows, not a rewrite of the old one.
+
+So the only archive this build needs is the session-level one below -
+Overheads is accurate by construction already, once entered this way.
+
 **How the rolling dropdown works, for the record (already built, needs
 nothing further):** `weekChoices()` computes from `new Date()` - "right
 now", read fresh on every page load, never a stored list. That is why it
