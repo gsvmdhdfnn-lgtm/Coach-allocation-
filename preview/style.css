@@ -1162,6 +1162,22 @@ a.rcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   color: var(--ink-faint);
 }
 
+.hcard-thisweek {
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--accent-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.hcard-thisweek span:first-child { color: var(--ink-soft); font-weight: 500; }
+.hcard-thisweek .value.pos, .hcard-thisweek .pos { color: var(--positive); }
+.hcard-thisweek .value.neg, .hcard-thisweek .neg { color: var(--negative); }
+
 /* ------------------------------ overheads ------------------------------ */
 
 .hcard-caption {

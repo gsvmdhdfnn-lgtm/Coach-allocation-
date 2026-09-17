@@ -222,6 +222,36 @@ password exists to hide, so this wants the same AES-GCM treatment
 `financials` already has before it carries real numbers — see the comment
 above `overheadsCsvUrl` in `config.js`.
 
+## "This week (actual)" — the head cards, made honest about right now
+
+The main figure on each Financials head card (Evening, Day, Combined) has
+always been, and still is, a **typical** figure - "what does this normally
+bring in per week/month." That never changes with the calendar, on
+purpose: it answers a steady-state question, not a this-instant one.
+
+**"This week (actual)"** is a second, separate figure on the same card,
+answering a genuinely different question: what does this actually bring
+in *this real week*, term breaks and cancellations included? A session
+whose school is on half term, or a session cancelled via `Changes` this
+week, contributes £0 to this figure while still counting normally in the
+typical one above it.
+
+The two are never blended into one number - a coach or David glancing at
+the page should never have to guess which question a figure is answering.
+Always weekly, regardless of whether the card is showing per-week or
+per-month, since "this week" isn't a monthly idea.
+
+**What it depends on:** `Terms` (a school's own term dates) and `Changes`
+(this week's one-off cancellations) - the exact same data already used for
+the Schedule page's week picker, nothing new to fetch or fill in. A venue
+or school with no Terms rows is treated as always running, same as
+everywhere else.
+
+**What this is not:** the yearly/termly forecast David asked about
+("£38,400 banked, £61,200 still to come") is a bigger, separate build -
+this is the smaller foundation piece it sits on top of, not the forecast
+itself.
+
 ## Custom filter — the Financials page, sliced any way
 
 The programme tree above (Evening/Day → category or school → session name)

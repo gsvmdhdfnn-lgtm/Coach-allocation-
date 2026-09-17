@@ -603,6 +603,21 @@
   }
 
   /**
+   * Whether this session is actually happening this real week - out of
+   * term (Terms), or cancelled (Changes). A cover still counts as running
+   * (same session, different coach, same money); only cancelled zeroes it.
+   * Used for the Financials page's "this week (actual)" figure, which is
+   * deliberately separate from the typical weekly/monthly figure rather
+   * than replacing it - one is "normally", the other is "right now".
+   */
+  function sessionRunsThisWeek(s, iso) {
+    var spans = schoolTerms(s);
+    if (spans.length && !inAnyTerm(spans, iso)) return false;
+    var hits = changesForWeek(iso).filter(function (ch) { return changeHits(ch, s); });
+    return !hits.some(function (ch) { return ch.type === "cancelled"; });
+  }
+
+  /**
    * One coach's week, with the changes applied. Sessions they have handed
    * over stay on the list, greyed, rather than vanishing - otherwise a coach
    * reads it as "deleted" and turns up anyway.
@@ -1689,8 +1704,17 @@
   /** Totals for a set of sessions, expressed in BOTH bases. */
   function agg(list) {
     var a = { participants: 0, missing: 0, counted: 0,
-      monthly: { gross:0, net:0, coach:0, venue:0, profit:0 },
-      weekly:  { gross:0, net:0, coach:0, venue:0, profit:0 } };
+      monthly:  { gross:0, net:0, coach:0, venue:0, profit:0 },
+      weekly:   { gross:0, net:0, coach:0, venue:0, profit:0 },
+      /* The typical weekly/monthly figures above answer "what does this
+         normally bring in" and never change with the calendar - that is
+         on purpose, so promoting/renaming a school does not quietly move
+         them. thisWeek is the separate, deliberately different question
+         "what does this actually bring in, this real week" - zeroed for
+         anything out of term or cancelled right now. */
+      thisWeek: { gross:0, net:0, coach:0, venue:0, profit:0 }
+    };
+    var thisMonday = isoDay(mondayOf(new Date()));
     list.forEach(function (s) {
       var f = state.financials && state.financials[s.id];
       if (!f) { a.missing++; return; }
@@ -1702,9 +1726,11 @@
                 coach: num(f.coach_cost) || 0, venue: num(f.venue_cost) || 0,
                 profit: num(f.profit) || 0 };
       a.participants += num(f.participants) || 0;
+      var runningNow = sessionRunsThisWeek(s, thisMonday);
       Object.keys(v).forEach(function (k) {
         a.monthly[k] += v[k] * toM;
         a.weekly[k]  += v[k] * toW;
+        if (runningNow) a.thisWeek[k] += v[k] * toW;
       });
     });
     return a;
@@ -1905,6 +1931,20 @@
       caption.textContent = "net profit after overheads";
       c.appendChild(caption);
     }
+
+    /* Deliberately separate from the big figure above, never blended into
+       it: that one answers "what does this normally bring in", this one
+       answers "what does this actually bring in, this real week" - term
+       breaks and cancellations included. Always weekly, whichever basis
+       is selected, since "this week" is not a monthly idea. */
+    var thisWeekHeadline = overheads
+      ? a.thisWeek.profit - overheads.weekly : a.thisWeek.profit;
+    var thisWeekLine = document.createElement("div");
+    thisWeekLine.className = "hcard-thisweek";
+    thisWeekLine.appendChild(mk("span", null, "This week (actual)"));
+    thisWeekLine.appendChild(mk("span",
+      thisWeekHeadline >= 0 ? "pos" : "neg", cash(thisWeekHeadline)));
+    c.appendChild(thisWeekLine);
 
     var rows = document.createElement("div");
     rows.className = "rows";
