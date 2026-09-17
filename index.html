@@ -14,7 +14,7 @@
      that holds a stale copy of one of these while taking a fresh copy of
      another gets a mix that works nowhere. Bumped on every deploy by
      tools/stamp.sh. -->
-<link rel="stylesheet" href="style.css?v=920bf43">
+<link rel="stylesheet" href="style.css?v=3cb2722">
 </head>
 <body>
 
@@ -125,25 +125,45 @@
       </div>
     </div>
 
-    <div class="head-cards" id="head-cards"></div>
+    <nav class="views fin-tabs" role="group" aria-label="Financials view" id="fin-tabs">
+      <button type="button" class="view-btn is-on" data-fintab="baseline">Baseline</button>
+      <button type="button" class="view-btn" data-fintab="actual">Actual</button>
+      <button type="button" class="view-btn" data-fintab="grouping">Grouping</button>
+    </nav>
 
-    <section class="fin-filter">
-      <h2 class="fin-filter-title">Period totals</h2>
-      <p class="fin-filter-sub">Pick any date range and see what actually came in, split honestly from what's still to come — never blended into one number.</p>
-      <div id="period-controls"></div>
-      <div id="period-result"></div>
-    </section>
+    <div id="fin-baseline" class="fin-tabpanel">
+      <p class="fin-tab-sub">What each programme typically brings in, if every
+         session ran every week or month exactly as scheduled.</p>
+      <div class="head-cards" id="head-cards"></div>
+    </div>
 
-    <section class="fin-filter">
-      <h2 class="fin-filter-title">Custom filter</h2>
-      <p class="fin-filter-sub">Any day, time window or venue, on its own or combined — cuts across the programme tree below rather than following it. For example every Monday session at one venue, or every session between 3 and 4:30pm.</p>
-      <div id="fin-filter-controls"></div>
-      <div id="fin-filter-result"></div>
-    </section>
+    <div id="fin-actual" class="fin-tabpanel" hidden>
+      <p class="fin-tab-sub">What's actually happening — term dates, half terms
+         and cancellations applied. This real week, and any date range you pick.</p>
+      <div class="head-cards" id="actual-cards"></div>
 
-    <div class="fin-pickers" id="fin-pickers"></div>
+      <section class="fin-filter">
+        <h2 class="fin-filter-title">Period totals</h2>
+        <p class="fin-filter-sub">Pick any date range and see what actually came in, split honestly from what's still to come — never blended into one number.</p>
+        <div id="period-controls"></div>
+        <div id="period-result"></div>
+      </section>
+    </div>
 
-    <div id="fin-detail"></div>
+    <div id="fin-grouping" class="fin-tabpanel" hidden>
+      <p class="fin-tab-sub">The same baseline figures, sliced by programme,
+         school, venue, day or time.</p>
+      <section class="fin-filter">
+        <h2 class="fin-filter-title">Custom filter</h2>
+        <p class="fin-filter-sub">Any day, time window or venue, on its own or combined. For example every Monday session at one venue, or every session between 3 and 4:30pm.</p>
+        <div id="fin-filter-controls"></div>
+        <div id="fin-filter-result"></div>
+      </section>
+
+      <div class="fin-pickers" id="fin-pickers"></div>
+
+      <div id="fin-detail"></div>
+    </div>
   </section>
 
 </main>
@@ -169,7 +189,7 @@
   </div>
 </div>
 
-<script src="config.js?v=920bf43"></script>
-<script src="app.js?v=920bf43"></script>
+<script src="config.js?v=3cb2722"></script>
+<script src="app.js?v=3cb2722"></script>
 </body>
 </html>

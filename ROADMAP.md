@@ -11,10 +11,13 @@ Last updated: 17 September 2026
 
 ## Done and live
 
-**Promoted from `preview/` to the live site on 17 September 2026** — the
+**Promoted from `preview/` to the live site on 17 September 2026, with a
+second promotion the same day for the Financials tab split** — the
 Coaches Hub layout below, and everything built on top of it since, is now
 what the team actually sees. `preview/` stays in place as the staging area
-for whatever gets built next (see its README).
+for whatever gets built next (see its README). Nobody was using the
+Financials page yet at the time of the second promotion, so it went out
+without a separate sign-off wait.
 
 One thing deliberately not turned on as part of this promotion: **coach
 codes**. `coachCodes` in `config.js` ships empty, so nobody has a
@@ -94,10 +97,6 @@ real codes (via `addCoachCodes` in `Add hub tabs.gs`) is next.
   - **Period totals** on the Financials page — pick any date range, see
     Actual (locked, from the archive) + Scheduled (a live projection for
     this week and beyond) + Total, never blended.
-
-## Done, sitting in the preview
-
-At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
 
 - **The Financials page split into three tabs — Baseline / Actual /
   Grouping.** David's own diagnosis: everything (head cards, the Per
