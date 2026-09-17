@@ -1741,12 +1741,22 @@
     nav:    document.getElementById("views"),
     view:   document.getElementById("finview"),
     cards:  document.getElementById("head-cards"),
+    actualCards: document.getElementById("actual-cards"),
     picks:  document.getElementById("fin-pickers"),
     detail: document.getElementById("fin-detail"),
     filterControls: document.getElementById("fin-filter-controls"),
     filterResult:   document.getElementById("fin-filter-result"),
     periodControls: document.getElementById("period-controls"),
     periodResult:   document.getElementById("period-result"),
+    /* Baseline / Actual / Grouping - three separate questions, three
+       separate tabs, never shown blended on the same screen. */
+    tab: "baseline",
+    tabPanels: {
+      baseline: document.getElementById("fin-baseline"),
+      actual:   document.getElementById("fin-actual"),
+      grouping: document.getElementById("fin-grouping")
+    },
+    tabBtns: document.getElementById("fin-tabs"),
     basis:  "monthly",
     nodes:  {},
     node:   null,
@@ -2029,20 +2039,6 @@
       c.appendChild(caption);
     }
 
-    /* Deliberately separate from the big figure above, never blended into
-       it: that one answers "what does this normally bring in", this one
-       answers "what does this actually bring in, this real week" - term
-       breaks and cancellations included. Always weekly, whichever basis
-       is selected, since "this week" is not a monthly idea. */
-    var thisWeekHeadline = overheads
-      ? a.thisWeek.profit - overheads.weekly : a.thisWeek.profit;
-    var thisWeekLine = document.createElement("div");
-    thisWeekLine.className = "hcard-thisweek";
-    thisWeekLine.appendChild(mk("span", null, "This week (actual)"));
-    thisWeekLine.appendChild(mk("span",
-      thisWeekHeadline >= 0 ? "pos" : "neg", cash(thisWeekHeadline)));
-    c.appendChild(thisWeekLine);
-
     var rows = document.createElement("div");
     rows.className = "rows";
     var lines = [["Revenue (net)", a[fv.basis].net], ["Coach cost", a[fv.basis].coach],
@@ -2084,6 +2080,60 @@
        they only ever apply to the Combined card. */
     var overheads = state.overheads && state.overheads.length ? overheadTotals() : null;
     fv.cards.appendChild(headCard("Combined", agg(state.sessions), true, overheads));
+  }
+
+  /**
+   * The Actual tab's equivalent of headCard() - one figure only, THIS real
+   * week, term dates and cancellations already applied. Deliberately never
+   * shows the typical monthly/weekly figure alongside it (that is the
+   * Baseline tab's job) so the two questions can never be misread as one
+   * number.
+   */
+  function actualCard(title, a, isTotal, overheads, weekOf) {
+    var c = document.createElement("div");
+    c.className = "hcard" + (isTotal ? " is-total" : "");
+    var h = document.createElement("h3"); h.textContent = title; c.appendChild(h);
+
+    var headline = overheads ? a.thisWeek.profit - overheads.weekly : a.thisWeek.profit;
+    var big = document.createElement("div");
+    big.className = "big " + (headline >= 0 ? "pos" : "neg");
+    big.textContent = cash(headline);
+    c.appendChild(big);
+
+    var caption = document.createElement("div");
+    caption.className = "alt hcard-caption";
+    caption.textContent = "this week (w/c " + weekOf + "), actual" +
+      (overheads ? " — after overheads" : "");
+    c.appendChild(caption);
+
+    var rows = document.createElement("div");
+    rows.className = "rows";
+    var lines = [["Revenue (net)", a.thisWeek.net], ["Coach cost", a.thisWeek.coach],
+                 ["Venue cost", a.thisWeek.venue]];
+    if (overheads) {
+      lines.push(["Session profit", a.thisWeek.profit]);
+      lines.push(["Overheads", -overheads.weekly]);
+    }
+    lines.forEach(function (r) {
+      var d = document.createElement("div");
+      var k = document.createElement("span"); k.textContent = r[0];
+      var v = document.createElement("span"); v.textContent = cash(r[1]);
+      d.appendChild(k); d.appendChild(v); rows.appendChild(d);
+    });
+    c.appendChild(rows);
+
+    return c;
+  }
+
+  function renderActualCards() {
+    fv.actualCards.innerHTML = "";
+    var weekOf = shortDate(mondayOf(new Date()));
+    var ev = state.sessions.filter(function (s) { return !isDay(s); });
+    var dy = state.sessions.filter(isDay);
+    fv.actualCards.appendChild(actualCard("Evening programme", agg(ev), false, null, weekOf));
+    fv.actualCards.appendChild(actualCard("Day programme", agg(dy), false, null, weekOf));
+    var overheads = state.overheads && state.overheads.length ? overheadTotals() : null;
+    fv.actualCards.appendChild(actualCard("Combined", agg(state.sessions), true, overheads, weekOf));
   }
 
   function renderLevel(node) {
@@ -2358,6 +2408,15 @@
     grid.appendChild(statCell("Total profit", cash(total.profit), total.profit >= 0 ? "pos" : "neg"));
     grid.appendChild(statCell("Total revenue (net)", cash(total.net)));
     out.appendChild(grid);
+
+    if (!t.actualWeeks && t.scheduledWeeks) {
+      var zeroNote = document.createElement("p");
+      zeroNote.className = "fin-note";
+      zeroNote.textContent = "Actual is 0 weeks because none of this range has " +
+        "finished and been archived yet - everything in it is still upcoming, " +
+        "so it's all on the Scheduled side below.";
+      out.appendChild(zeroNote);
+    }
 
     if (t.scheduledWeeks) {
       var note = document.createElement("p");
@@ -2842,7 +2901,6 @@
     if (key === "coaches" || key.indexOf("c:") === 0) {
       fv.node = { key: key, label: "By coach", coachView: true };
       renderPickers(fv.node);
-      renderHeadCards();
       if (key === "coaches") renderCoaches();
       else renderCoachDetail(key.slice(2));
       return;
@@ -2850,16 +2908,39 @@
     var node = fv.nodes[key] || fv.nodes.all;
     fv.node = node;
     renderPickers(node);
-    renderHeadCards();
     renderLevel(node);
+  }
+
+  /**
+   * Three separate questions, three separate tabs - Baseline (typical
+   * figures), Actual (term-aware, this real week and any date range) and
+   * Grouping (the same baseline figures sliced by programme/school/venue/
+   * day/time). Each tab's content is only built when it is actually shown,
+   * so switching tabs never pays for work nobody is looking at.
+   */
+  function showFinTab(tab) {
+    fv.tab = tab;
+    Object.keys(fv.tabPanels).forEach(function (k) {
+      fv.tabPanels[k].hidden = k !== tab;
+    });
+    Array.prototype.forEach.call(fv.tabBtns.querySelectorAll("[data-fintab]"), function (b) {
+      b.classList.toggle("is-on", b.getAttribute("data-fintab") === tab);
+    });
+    if (tab === "baseline") {
+      renderHeadCards();
+    } else if (tab === "actual") {
+      renderActualCards();
+      renderPeriodPanel();
+    } else if (tab === "grouping") {
+      renderFilterPanel();
+      selectNode(fv.node && (fv.node.coachView || fv.nodes[fv.node.key])
+                   ? fv.node.key : "all");
+    }
   }
 
   function renderFinView() {
     buildTree();
-    renderPeriodPanel();
-    renderFilterPanel();
-    selectNode(fv.node && (fv.node.coachView || fv.nodes[fv.node.key])
-                 ? fv.node.key : "all");
+    showFinTab(fv.tab);
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (b) {
@@ -2868,10 +2949,18 @@
       Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (o) {
         o.classList.toggle("is-on", o === b);
       });
-      if (fv.node) selectNode(fv.node.key);
-      renderFilterResult();
+      // Basis (per month/per week) only affects Baseline and Grouping - a
+      // no-op on Actual, which is always "this real week" regardless.
+      if (fv.tab === "baseline") renderHeadCards();
+      else if (fv.tab === "grouping") { if (fv.node) selectNode(fv.node.key); renderFilterResult(); }
     });
   });
+
+  if (fv.tabBtns) {
+    Array.prototype.forEach.call(fv.tabBtns.querySelectorAll("[data-fintab]"), function (b) {
+      b.addEventListener("click", function () { showFinTab(b.getAttribute("data-fintab")); });
+    });
+  }
 
   /* ====================================================================== *
    * Hub - home, venues, handbook

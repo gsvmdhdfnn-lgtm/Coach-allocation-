@@ -34,6 +34,22 @@ Sections are linkable: `#venues`, `#handbook`, `#schedule`. Old
 `#coach=Name` links still work and still land on that coach's week, so
 anything already shared with a coach keeps working.
 
+### Inside Financials — Baseline / Actual / Grouping
+
+The Financials page itself has three tabs, the same idea as the main
+Home/My week/Venues nav above it, so a genuinely different question never
+gets blended into the same screen as another one:
+
+| Tab | Answers | Contains |
+| --- | --- | --- |
+| **Baseline** | "What does this normally bring in?" | The Evening/Day/Combined head cards, typical monthly/weekly figures — as if every session ran every week or month exactly as scheduled |
+| **Actual** | "What's really happening, right now and over any range?" | The same three cards, but this real week only, term dates and cancellations applied — plus **Period totals** for any date range |
+| **Grouping** | "How does this break down?" | **Custom filter** (day/time/venue) and the programme tree (Evening/Day → category or school → session), both reading the Baseline figures sliced different ways |
+
+`Per month` / `Per week` (top of the page) affects Baseline and Grouping,
+where it means something — Actual is always "this real week," so the
+toggle has no effect there.
+
 ## Turning on the two new sections
 
 Both are optional and both are hidden until their tab is published, so
@@ -226,16 +242,22 @@ password exists to hide, so this wants the same AES-GCM treatment
 `financials` already has before it carries real numbers — see the comment
 above `overheadsCsvUrl` in `config.js`.
 
-## "This week (actual)" — the head cards, made honest about right now
+## "This week (actual)" — the Actual tab, made honest about right now
 
-The main figure on each Financials head card (Evening, Day, Combined) has
-always been, and still is, a **typical** figure - "what does this normally
-bring in per week/month." That never changes with the calendar, on
-purpose: it answers a steady-state question, not a this-instant one.
+The Baseline tab's head cards (Evening, Day, Combined) show a **typical**
+figure - "what does this normally bring in per week/month." That never
+changes with the calendar, on purpose: it answers a steady-state question,
+not a this-instant one.
 
-**"This week (actual)"** is a second, separate figure on the same card,
-answering a genuinely different question: what does this actually bring
-in *this real week*?
+The **Actual tab** has its own set of the same three cards, answering a
+genuinely different question: what does this actually bring in *this real
+week*? Each card is captioned with the exact week it's showing - "this
+week (w/c 14 Sep), actual" - so there's no ambiguity about which week a
+figure belongs to. Originally this was a line embedded inside the Baseline
+cards; it moved to its own tab (with David) once it became clear that two
+different questions sitting on the same card, without a strong visual
+split, invited exactly the kind of "wait, which number is this?" confusion
+it was built to avoid.
 
 **Revenue and cost are NOT gated the same way - confirmed directly with
 David, worth being precise about since it is not the obvious answer, and
@@ -277,7 +299,7 @@ itself.
 
 ## Period totals — pick any date range, honestly split
 
-A new panel on the Financials page, above Custom filter: pick a from and
+Lives on the **Actual tab**, below the this-week cards: pick a from and
 to date, and it shows what that period actually earned - split into two
 figures that are never blended into one:
 
@@ -337,11 +359,12 @@ carries straight across the boundary without any special handling.
 
 ## Custom filter — the Financials page, sliced any way
 
-The programme tree above (Evening/Day → category or school → session name)
-is one fixed way of grouping the same sessions. **Custom filter**, sitting
-above it on the Financials page, is a second, independent tool for cutting
-across that tree instead of following it: pick any day of the week, a time
-window, a venue, or any combination, and it totals whatever matches.
+Lives on the **Grouping tab**, above the programme tree. The programme
+tree (Evening/Day → category or school → session name) below it is one
+fixed way of grouping the same sessions. **Custom filter** is a second,
+independent tool for cutting across that tree instead of following it:
+pick any day of the week, a time window, a venue, or any combination, and
+it totals whatever matches.
 
 It exists for questions the tree can't answer on its own — David's own
 examples:

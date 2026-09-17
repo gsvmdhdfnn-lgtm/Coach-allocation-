@@ -95,6 +95,36 @@ real codes (via `addCoachCodes` in `Add hub tabs.gs`) is next.
     Actual (locked, from the archive) + Scheduled (a live projection for
     this week and beyond) + Total, never blended.
 
+## Done, sitting in the preview
+
+At `…/Coach-allocation-/preview/`. Not promoted to the live site yet.
+
+- **The Financials page split into three tabs — Baseline / Actual /
+  Grouping.** David's own diagnosis: everything (head cards, the Per
+  month/week toggle, "This week (actual)", Period totals, Custom filter,
+  the programme tree) was stacked on one page with no strong signal for
+  which question a given number was answering — "actual 0 weeks" read as
+  a possible bug when it was really just an empty date range. Same pattern
+  as the main Home/My week/Venues nav, applied one level down:
+  - **Baseline** — the head cards, typical monthly/weekly figures only.
+    "This week (actual)" removed from here entirely (it used to be a line
+    embedded in each card).
+  - **Actual** — the same three cards, but showing only this real week's
+    figure, each one captioned with the week it's for ("this week (w/c 14
+    Sep), actual") so it can never be mistaken for the Baseline number —
+    plus Period totals underneath.
+  - **Grouping** — Custom filter and the programme tree drill-down, both
+    reading the Baseline figures, just sliced differently (by day/time/
+    venue, or by programme/school/session).
+  - The Per month/Per week toggle stays at the very top, above the tabs —
+    it affects Baseline and Grouping, and does nothing on Actual (always
+    "this real week", never a monthly idea).
+  - Tested with a 25-assertion fixture covering tab switching, that
+    Baseline cards no longer show the this-week line, that Actual cards
+    show the week-commencing caption, that Period totals and the tree
+    drill-down still work inside their new tabs, and that the basis
+    toggle still works.
+
 ## Next — tomorrow, at the laptop
 
 1. **Tidy the just-backfilled P&L archive** — a few schools were included
