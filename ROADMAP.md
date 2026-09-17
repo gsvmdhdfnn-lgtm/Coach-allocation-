@@ -430,6 +430,22 @@ per month, or rows on a running log) so the answer survives someone
 cleaning up the working tabs later. The picker is for "what does this week
 look like"; the archive is for "what actually happened in March 2027".
 
+**Confirmed with David directly, worth having in his own words:** if prices
+go up in week 10, "banked so far" for weeks 1-9 must NOT move - only the
+scheduled remainder should. Without the archive above, "banked so far"
+would just be a live recalculation from today's Financials numbers and
+would silently reshape past weeks every time a figure changes, which is
+the exact false representation he is trying to avoid. So the archive is
+not an enhancement to build later - the forecast is not accurate without
+it, full stop.
+
+**Same archive as the coach rate history entry above, not a second one.**
+Both need the identical thing: write a period's real numbers down once
+that period closes, so nothing live can reshape it afterwards. Build the
+archive mechanism once, and both the yearly forecast and the coach hours
+report read from and write to it - not two separate archives that could
+drift apart from each other.
+
 **How the rolling dropdown works, for the record (already built, needs
 nothing further):** `weekChoices()` computes from `new Date()` - "right
 now", read fresh on every page load, never a stored list. That is why it
