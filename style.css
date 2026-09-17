@@ -583,6 +583,7 @@ body {
 
 .fin-tabs { margin: 0 0 6px; }
 .fin-tab-sub { margin: 0 0 16px; font-size: .86rem; color: var(--ink-faint); }
+.fin-actual-basis { margin: 0 0 16px; }
 
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .seg-btn {

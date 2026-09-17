@@ -14,7 +14,7 @@
      that holds a stale copy of one of these while taking a fresh copy of
      another gets a mix that works nowhere. Bumped on every deploy by
      tools/stamp.sh. -->
-<link rel="stylesheet" href="style.css?v=3cb2722">
+<link rel="stylesheet" href="style.css?v=6150ea3">
 </head>
 <body>
 
@@ -140,7 +140,15 @@
     <div id="fin-actual" class="fin-tabpanel" hidden>
       <p class="fin-tab-sub">What's actually happening — term dates, half terms
          and cancellations applied. This real week, and any date range you pick.</p>
+
+      <div class="seg fin-actual-basis" role="group" aria-label="Actual figures for" id="actual-basis">
+        <button type="button" class="seg-btn is-on" data-actualbasis="weekly">This week</button>
+        <button type="button" class="seg-btn" data-actualbasis="monthly">This month</button>
+        <button type="button" class="seg-btn" data-actualbasis="termly">This term</button>
+      </div>
+
       <div class="head-cards" id="actual-cards"></div>
+      <div id="actual-note"></div>
 
       <section class="fin-filter">
         <h2 class="fin-filter-title">Period totals</h2>
@@ -189,7 +197,7 @@
   </div>
 </div>
 
-<script src="config.js?v=3cb2722"></script>
-<script src="app.js?v=3cb2722"></script>
+<script src="config.js?v=6150ea3"></script>
+<script src="app.js?v=6150ea3"></script>
 </body>
 </html>
