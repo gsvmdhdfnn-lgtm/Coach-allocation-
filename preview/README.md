@@ -234,17 +234,26 @@ answering a genuinely different question: what does this actually bring
 in *this real week*?
 
 **Revenue and cost are NOT gated the same way - confirmed directly with
-David, worth being precise about since it is not the obvious answer.** A
-family's monthly subscription is billed the same whether that month's
-weeks were 3-on-1-off or 4-on, so **revenue never drops to £0** for a
-term break or a `Changes` cancellation - it always counts at the typical
-rate. **Coach cost and venue cost DO drop to £0** for a week that is
-genuinely not happening, because nobody is coaching and no venue is being
-paid for. So this figure's profit is not copied from the sheet's profit
-column - it is worked out fresh as revenue minus THIS WEEK's actual
-costs, and a real break week correctly shows a HIGHER profit than usual:
-full revenue, nothing paid out. That is a true fact about how the
-business runs, not a bug.
+David, worth being precise about since it is not the obvious answer, and
+it depends on `period`, not just on whether the session is running.**
+
+- **`coach_cost` and `venue_cost` always drop to £0** for a week that is
+  genuinely not happening, whatever the billing period - nobody is
+  coaching and no venue is being paid for either way.
+- **`monthly`** - a smoothed subscription, billed the same whether that
+  month's actual weeks were 3-on-1-off or 4-on. Revenue keeps counting
+  through a mid-season gap like half term. It only actually drops to £0
+  outside the WHOLE season - before the school's first Terms span starts,
+  or after its last one ends (with no span left open-ended).
+- **`weekly`** - pay as you go, no smoothing at all. Revenue only counts
+  for a week the session is genuinely running - same gating as coach and
+  venue cost, not the smoothed monthly treatment.
+
+So this figure's profit is not copied from the sheet's profit column - it
+is worked out fresh as revenue minus THIS WEEK's actual costs, and a real
+mid-season break week on a `monthly` session correctly shows a HIGHER
+profit than usual: full revenue, nothing paid out. That is a true fact
+about how the business runs, not a bug.
 
 The two figures are never blended into one number - a coach or David
 glancing at the page should never have to guess which question a figure

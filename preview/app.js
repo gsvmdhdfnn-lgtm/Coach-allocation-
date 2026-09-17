@@ -445,6 +445,31 @@
   }
 
   /**
+   * Coarser than inAnyTerm on purpose: is this week anywhere between the
+   * EARLIEST start and the LATEST end across all of a school's spans -
+   * i.e. somewhere within the whole enrolment, gaps like half term
+   * included - rather than strictly inside one specific span.
+   *
+   * For a `monthly`-billed session, the family's subscription runs the
+   * whole season (September - July, say), smoothed straight through a
+   * half-term gap; it only actually stops outside that whole season
+   * (August). A `weekly`-billed family pays as they go, so they use
+   * inAnyTerm instead, at the finer per-span granularity - see agg().
+   */
+  function withinWholeSeason(spans, mondayIso) {
+    if (!spans.length) return true;
+    var d = parseDay(mondayIso);
+    var starts = spans.filter(function (t) { return t.starts; })
+                       .map(function (t) { return mondayOf(t.starts).getTime(); });
+    if (starts.length && d.getTime() < Math.min.apply(null, starts)) return false;
+    if (spans.some(function (t) { return t.starts && !t.ends; })) return true;
+    var ends = spans.filter(function (t) { return t.ends; })
+                     .map(function (t) { return mondayOf(t.ends).getTime(); });
+    if (ends.length && d.getTime() > Math.max.apply(null, ends)) return false;
+    return true;
+  }
+
+  /**
    * Why a school is not on this week - distinguishing "hasn't started",
    * "finished for the year" and "on a break between two spans" (half term),
    * because they read differently even though none of them is a
@@ -1714,17 +1739,25 @@
          on purpose, so promoting/renaming a school does not quietly move
          them. thisWeek is the separate, deliberately different question
          "what does this actually bring in, this real week."
-         Confirmed with David: revenue runs on its own calendar, not the
-         coaching one - a monthly subscription is billed the same whether
-         a school's specific weeks that month were 3-on-1-off or 4-on, so
-         revenue is never zeroed by a term break or a Changes cancellation.
-         Coach and venue cost DO zero, because nobody is coaching and no
-         venue is being paid for on a week that is not actually happening.
+         Confirmed with David: revenue and cost do not follow the same
+         rule, and neither does revenue follow one rule for every session -
+         it depends on how that session is actually billed (`period`):
+           - `monthly`: a smoothed subscription, billed the same whether a
+             school's specific weeks that month were 3-on-1-off or 4-on.
+             Revenue keeps counting through a mid-season gap like half
+             term - it only actually stops outside the WHOLE season
+             (before term starts in the autumn, after it ends in summer).
+           - `weekly`: pay-as-you-go, no smoothing - revenue only counts
+             for a week the session is actually running, same granularity
+             as coach/venue cost below.
+         Coach cost and venue cost always zero for a week that is not
+         actually happening, regardless of billing period, because nobody
+         is coaching and no venue is being paid for either way.
          So thisWeek.profit cannot be copied from the sheet's profit
          column like the typical figures - it has to be worked out fresh
          as revenue minus THIS WEEK's actual costs, which is why a real
-         break week correctly shows a HIGHER profit than usual: full
-         revenue, nothing paid out. */
+         break week on a monthly-billed session correctly shows a HIGHER
+         profit than usual: full revenue, nothing paid out. */
       thisWeek: { gross:0, net:0, coach:0, venue:0, profit:0 }
     };
     var thisMonday = isoDay(mondayOf(new Date()));
@@ -1740,12 +1773,17 @@
                 profit: num(f.profit) || 0 };
       a.participants += num(f.participants) || 0;
       var costsApply = sessionRunsThisWeek(s, thisMonday);
+      var revenueApplies = per === "weekly"
+        ? costsApply
+        : withinWholeSeason(schoolTerms(s), thisMonday);
       Object.keys(v).forEach(function (k) {
         a.monthly[k] += v[k] * toM;
         a.weekly[k]  += v[k] * toW;
       });
-      a.thisWeek.gross += v.gross * toW;
-      a.thisWeek.net   += v.net * toW;
+      if (revenueApplies) {
+        a.thisWeek.gross += v.gross * toW;
+        a.thisWeek.net   += v.net * toW;
+      }
       if (costsApply) {
         a.thisWeek.coach += v.coach * toW;
         a.thisWeek.venue += v.venue * toW;
