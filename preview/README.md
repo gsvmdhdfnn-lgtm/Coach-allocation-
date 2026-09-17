@@ -271,6 +271,66 @@ everywhere else.
 this is the smaller foundation piece it sits on top of, not the forecast
 itself.
 
+## Period totals — pick any date range, honestly split
+
+A new panel on the Financials page, above Custom filter: pick a from and
+to date, and it shows what that period actually earned - split into two
+figures that are never blended into one:
+
+- **Actual** - weeks strictly before this real week, summed straight from
+  the **P&L archive** (see below). Locked, permanent, never recalculated -
+  a price rise or a headcount change next month cannot reach back and
+  reshape a week that has already happened.
+- **Scheduled** - this week and any future week inside the range, worked
+  out fresh from today's Financials figures (today's participants,
+  today's prices) - the exact same calculation the head cards' "This week
+  (actual)" line already uses. An honest estimate, clearly labelled as
+  such, not a promise - it becomes "Actual" on its own, automatically,
+  once each of those weeks is archived for real.
+
+Pick a range that's entirely in the past and Scheduled is naturally zero;
+pick one stretching into next term and Scheduled naturally grows to cover
+it. Nothing to configure - it works out which side each week falls on
+from today's date alone.
+
+## The P&L archive - a permanent weekly record
+
+**`Weekly P&L archive.gs`** (delivered separately, not part of this repo -
+kept out of a public repo the same way the other sheet-management scripts
+are) writes one row per session, per week, once that week has genuinely
+finished - never a guess, never backfilled. Run once by hand
+(`archiveLastWeek`) to create the tab and archive the most recently
+finished week, then run `setUpWeeklyArchiveTrigger` once - after that it
+archives itself automatically every Monday morning, forever, with no
+further action needed.
+
+It applies the exact same rules as "This week (actual)" on the head
+cards, so the two never disagree:
+
+- Coach cost and venue cost drop to zero for a week a session was not
+  actually happening - out of Terms, or cancelled via Changes.
+- A `monthly`-billed session keeps its revenue through a mid-season gap
+  like half term (smoothed subscription) - it only stops outside the
+  WHOLE season, before the first Terms span starts or after the last one
+  ends with nothing left open.
+- A `weekly`-billed session is pay-as-you-go - revenue only counts for a
+  week it actually ran, same as cost.
+
+Columns: `week_commencing, session_id, session_name, venue, client,
+category, programme, participants, revenue_gross, revenue_net,
+coach_cost, venue_cost, profit`.
+
+**Published as CSV like every other tab** (`archiveCsvUrl` in
+`config.js`), fetched only after the Financials password succeeds, same
+as Financials and Overheads. The web app only ever reads it - it never
+writes to it, and never recalculates an already-archived week.
+
+**Never reset or clear this tab**, including at a school-year boundary -
+it is meant to accumulate forever, giving years of real history to look
+back on. A new academic year just means adding the next set of Terms
+rows before the old ones run out, same as any other year; the archive
+carries straight across the boundary without any special handling.
+
 ## Custom filter — the Financials page, sliced any way
 
 The programme tree above (Evening/Day → category or school → session name)

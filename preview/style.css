@@ -764,7 +764,7 @@ table.bd td .sub { display: block; font-weight: 400; font-size: .8rem; color: va
 
 .filter-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .filter-line .fin-select { width: auto; flex: 1 1 200px; max-width: 320px; }
-.filter-line input[type="time"] {
+.filter-line input[type="time"], .filter-line input[type="date"] {
   font: inherit;
   padding: 11px 13px;
   color: var(--ink);

@@ -22,6 +22,7 @@
     aliases: {},         // lowercased alias -> canonical name
     financials: null,    // session_id -> row, once unlocked
     overheads: null,     // rows from the Overheads tab, once unlocked
+    archive: null,       // the permanent weekly record, once unlocked
     selected: null,
     view: "home",
     calendar: null,      // "YYYY-MM-DD" (a Monday) -> { weekNo, label, theme, running }
@@ -1473,7 +1474,8 @@
         objs.forEach(function (r) { if (r.session_id) map[r.session_id] = r; });
         state.financials = map;   // memory only — gone on reload, never stored
         return loadOverheads();
-      });
+      })
+      .then(loadArchive);
   }
 
   /** Company-wide costs, not tied to any session. Optional, and only ever
@@ -1495,6 +1497,31 @@
     }).catch(function (e) {
       console.warn("Overheads could not be loaded:", e);
       state.overheads = [];
+    });
+  }
+
+  /** The permanent weekly record, read-only here — the app only ever sums
+      what is already archived, never writes to it. Same password gate as
+      Financials/Overheads: not fetched until the password has succeeded. */
+  function loadArchive() {
+    if (!hasTab(CFG.archiveCsvUrl)) { state.archive = []; return; }
+    return fetchCsv(CFG.archiveCsvUrl, "P&L archive").then(function (rows) {
+      state.archive = toObjects(rows, ["week_commencing", "session_id"], "P&L archive")
+        .map(function (r) {
+          return {
+            week: isoDay(mondayOf(parseDay(r.week_commencing) || new Date())),
+            sessionId: String(r.session_id || "").trim(),
+            gross: num(r.revenue_gross) || 0,
+            net: num(r.revenue_net) || 0,
+            coach: num(r.coach_cost) || 0,
+            venue: num(r.venue_cost) || 0,
+            profit: num(r.profit) || 0,
+            participants: num(r.participants) || 0
+          };
+        }).filter(function (r) { return r.week && r.sessionId; });
+    }).catch(function (e) {
+      console.warn("P&L archive could not be loaded:", e);
+      state.archive = [];
     });
   }
 
@@ -1718,49 +1745,74 @@
     detail: document.getElementById("fin-detail"),
     filterControls: document.getElementById("fin-filter-controls"),
     filterResult:   document.getElementById("fin-filter-result"),
+    periodControls: document.getElementById("period-controls"),
+    periodResult:   document.getElementById("period-result"),
     basis:  "monthly",
     nodes:  {},
     node:   null,
     /* Independent of the programme tree above: a day, a venue and/or a
        time window, any combination. `days` holds the ones switched on. */
-    filter: { days: {}, venue: "", from: "", to: "" }
+    filter: { days: {}, venue: "", from: "", to: "" },
+    /* A date range - "from"/"to" the person picks. */
+    period: { from: "", to: "" }
   };
 
   var DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                    "Saturday", "Sunday"];
 
   /** Totals for a set of sessions, expressed in BOTH bases. */
+  /**
+   * A single week's ACTUAL total for a list of sessions - not the typical
+   * figure, what this specific week genuinely brings in. Works for any
+   * week, not just today: the head cards use it for "This week (actual)",
+   * the date-range panel reuses it to project any future week that has
+   * not been archived yet, so the two never compute this differently.
+   *
+   * Revenue and cost do not follow the same rule, and revenue does not
+   * follow one rule for every session - it depends on how that session
+   * is billed (`period`), confirmed directly with David:
+   *   - `monthly`: a smoothed subscription, billed the same whether a
+   *     school's specific weeks that month were 3-on-1-off or 4-on.
+   *     Revenue keeps counting through a mid-season gap like half term -
+   *     it only stops outside the WHOLE season (before term starts, or
+   *     after it ends for the year).
+   *   - `weekly`: pay-as-you-go, no smoothing - revenue only counts for a
+   *     week the session is actually running, same as cost below.
+   * Coach cost and venue cost always zero for a week that is not actually
+   * happening, regardless of billing period - nobody is coaching, no
+   * venue is being paid for, either way.
+   */
+  function weekEstimate(list, iso) {
+    var out = { gross: 0, net: 0, coach: 0, venue: 0, profit: 0 };
+    list.forEach(function (s) {
+      var f = state.financials && state.financials[s.id];
+      if (!f) return;
+      var per = String(f.period || "").toLowerCase();
+      var toW = per === "monthly" ? 1 / WEEKS : 1;
+      var gross = num(f.revenue_gross) || 0, net = num(f.revenue_net) || 0,
+          coach = num(f.coach_cost) || 0, venue = num(f.venue_cost) || 0;
+      var costsApply = sessionRunsThisWeek(s, iso);
+      var revenueApplies = per === "weekly"
+        ? costsApply
+        : withinWholeSeason(schoolTerms(s), iso);
+      if (revenueApplies) { out.gross += gross * toW; out.net += net * toW; }
+      if (costsApply)     { out.coach += coach * toW; out.venue += venue * toW; }
+    });
+    out.profit = out.net - out.coach - out.venue;
+    return out;
+  }
+
   function agg(list) {
     var a = { participants: 0, missing: 0, counted: 0,
       monthly:  { gross:0, net:0, coach:0, venue:0, profit:0 },
       weekly:   { gross:0, net:0, coach:0, venue:0, profit:0 },
-      /* The typical weekly/monthly figures above answer "what does this
-         normally bring in" and never change with the calendar - that is
-         on purpose, so promoting/renaming a school does not quietly move
-         them. thisWeek is the separate, deliberately different question
-         "what does this actually bring in, this real week."
-         Confirmed with David: revenue and cost do not follow the same
-         rule, and neither does revenue follow one rule for every session -
-         it depends on how that session is actually billed (`period`):
-           - `monthly`: a smoothed subscription, billed the same whether a
-             school's specific weeks that month were 3-on-1-off or 4-on.
-             Revenue keeps counting through a mid-season gap like half
-             term - it only actually stops outside the WHOLE season
-             (before term starts in the autumn, after it ends in summer).
-           - `weekly`: pay-as-you-go, no smoothing - revenue only counts
-             for a week the session is actually running, same granularity
-             as coach/venue cost below.
-         Coach cost and venue cost always zero for a week that is not
-         actually happening, regardless of billing period, because nobody
-         is coaching and no venue is being paid for either way.
-         So thisWeek.profit cannot be copied from the sheet's profit
-         column like the typical figures - it has to be worked out fresh
-         as revenue minus THIS WEEK's actual costs, which is why a real
-         break week on a monthly-billed session correctly shows a HIGHER
-         profit than usual: full revenue, nothing paid out. */
+      /* The typical figures above answer "what does this normally bring
+         in" and never change with the calendar, on purpose - so promoting
+         or renaming a school does not quietly move them. thisWeek is the
+         separate, deliberately different question "what does this
+         actually bring in, this real week" - see weekEstimate() above. */
       thisWeek: { gross:0, net:0, coach:0, venue:0, profit:0 }
     };
-    var thisMonday = isoDay(mondayOf(new Date()));
     list.forEach(function (s) {
       var f = state.financials && state.financials[s.id];
       if (!f) { a.missing++; return; }
@@ -1772,24 +1824,12 @@
                 coach: num(f.coach_cost) || 0, venue: num(f.venue_cost) || 0,
                 profit: num(f.profit) || 0 };
       a.participants += num(f.participants) || 0;
-      var costsApply = sessionRunsThisWeek(s, thisMonday);
-      var revenueApplies = per === "weekly"
-        ? costsApply
-        : withinWholeSeason(schoolTerms(s), thisMonday);
       Object.keys(v).forEach(function (k) {
         a.monthly[k] += v[k] * toM;
         a.weekly[k]  += v[k] * toW;
       });
-      if (revenueApplies) {
-        a.thisWeek.gross += v.gross * toW;
-        a.thisWeek.net   += v.net * toW;
-      }
-      if (costsApply) {
-        a.thisWeek.coach += v.coach * toW;
-        a.thisWeek.venue += v.venue * toW;
-      }
     });
-    a.thisWeek.profit = a.thisWeek.net - a.thisWeek.coach - a.thisWeek.venue;
+    a.thisWeek = weekEstimate(list, isoDay(mondayOf(new Date())));
     return a;
   }
 
@@ -2160,6 +2200,175 @@
     return wrap;
   }
 
+
+  /* -------------------------- period totals -------------------------- *
+   * Any date range, split honestly into two parts that are never blended:
+   *
+   *   Actual    - weeks strictly before this real week, summed straight
+   *               from the permanent archive. Locked - nothing changes
+   *               these once they are written, whatever gets edited later.
+   *   Scheduled - this week and any future week in the range, worked out
+   *               fresh from today's Financials figures via
+   *               weekEstimate() (the exact same calculation the head
+   *               cards' "This week (actual)" uses) - an honest estimate,
+   *               not a promise, since it uses whatever is true today.
+   *
+   * "This week" (not yet finished) always falls on the Scheduled side,
+   * never Actual - it is not archived until next Monday, so treating it
+   * as locked would be pretending a week is over before it is. */
+
+  /** Every Monday from `fromIso` to `toIso` inclusive, as ISO strings. */
+  function mondaysBetween(fromIso, toIso) {
+    var out = [];
+    var d = mondayOf(parseDay(fromIso));
+    var end = mondayOf(parseDay(toIso));
+    while (d <= end) {
+      out.push(isoDay(d));
+      d = new Date(d.getTime());
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }
+
+  function periodTotals(fromIso, toIso) {
+    var out = {
+      actual:    { gross:0, net:0, coach:0, venue:0, profit:0 },
+      scheduled: { gross:0, net:0, coach:0, venue:0, profit:0 },
+      actualWeeks: 0, scheduledWeeks: 0
+    };
+    var fromMonday = isoDay(mondayOf(parseDay(fromIso)));
+    var toMonday = isoDay(mondayOf(parseDay(toIso)));
+    var todayMonday = isoDay(mondayOf(new Date()));
+    if (fromMonday > toMonday) return out;
+
+    var archivedWeeks = {};
+    (state.archive || []).forEach(function (r) {
+      if (r.week < fromMonday || r.week > toMonday || r.week >= todayMonday) return;
+      archivedWeeks[r.week] = true;
+      out.actual.gross += r.gross; out.actual.net += r.net;
+      out.actual.coach += r.coach; out.actual.venue += r.venue;
+    });
+    out.actual.profit = out.actual.net - out.actual.coach - out.actual.venue;
+    out.actualWeeks = Object.keys(archivedWeeks).length;
+
+    var scheduledFrom = fromMonday > todayMonday ? fromMonday : todayMonday;
+    if (scheduledFrom <= toMonday) {
+      mondaysBetween(scheduledFrom, toMonday).forEach(function (iso) {
+        var w = weekEstimate(state.sessions, iso);
+        out.scheduled.gross += w.gross; out.scheduled.net += w.net;
+        out.scheduled.coach += w.coach; out.scheduled.venue += w.venue;
+        out.scheduledWeeks++;
+      });
+    }
+    out.scheduled.profit = out.scheduled.net - out.scheduled.coach - out.scheduled.venue;
+
+    return out;
+  }
+
+  function renderPeriodPanel() {
+    var box = fv.periodControls;
+    box.innerHTML = "";
+
+    var line = document.createElement("div");
+    line.className = "filter-line";
+
+    var fromInput = document.createElement("input");
+    fromInput.type = "date";
+    fromInput.value = fv.period.from;
+    fromInput.setAttribute("aria-label", "From date");
+    fromInput.addEventListener("change", function () {
+      fv.period.from = fromInput.value;
+      renderPeriodResult();
+    });
+    line.appendChild(fromInput);
+
+    var toLabel = document.createElement("span");
+    toLabel.className = "filter-to";
+    toLabel.textContent = "to";
+    line.appendChild(toLabel);
+
+    var toInput = document.createElement("input");
+    toInput.type = "date";
+    toInput.value = fv.period.to;
+    toInput.setAttribute("aria-label", "To date");
+    toInput.addEventListener("change", function () {
+      fv.period.to = toInput.value;
+      renderPeriodResult();
+    });
+    line.appendChild(toInput);
+
+    if (fv.period.from || fv.period.to) {
+      var clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "btn btn-quiet filter-clear";
+      clear.textContent = "Clear";
+      clear.addEventListener("click", function () {
+        fv.period = { from: "", to: "" };
+        renderPeriodPanel();
+      });
+      line.appendChild(clear);
+    }
+    box.appendChild(line);
+
+    renderPeriodResult();
+  }
+
+  function renderPeriodResult() {
+    var out = fv.periodResult;
+    out.innerHTML = "";
+
+    if (!fv.period.from || !fv.period.to) {
+      var hint = document.createElement("p");
+      hint.className = "fin-note";
+      hint.textContent = "Pick a from and to date for what actually came in over that " +
+        "period, plus an honest estimate of what's still to come within it.";
+      out.appendChild(hint);
+      return;
+    }
+    if (fv.period.from > fv.period.to) {
+      var bad = document.createElement("p");
+      bad.className = "fin-note";
+      bad.textContent = "The “from” date is after the “to” date.";
+      out.appendChild(bad);
+      return;
+    }
+    if (!state.archive) {
+      var noArchive = document.createElement("p");
+      noArchive.className = "fin-note";
+      noArchive.textContent = "No P&L archive is set up yet, so there's nothing " +
+        "locked in for “Actual” - once it's running, real weeks will show here.";
+      out.appendChild(noArchive);
+      return;
+    }
+
+    var t = periodTotals(fv.period.from, fv.period.to);
+    var total = {
+      net: t.actual.net + t.scheduled.net,
+      profit: t.actual.profit + t.scheduled.profit
+    };
+
+    var grid = document.createElement("div");
+    grid.className = "level-grid";
+    grid.appendChild(statCell(
+      "Actual (" + t.actualWeeks + (t.actualWeeks === 1 ? " week" : " weeks") + ")",
+      cash(t.actual.profit), t.actual.profit >= 0 ? "pos" : "neg"));
+    grid.appendChild(statCell(
+      "Scheduled (" + t.scheduledWeeks + (t.scheduledWeeks === 1 ? " week" : " weeks") + ")",
+      cash(t.scheduled.profit), t.scheduled.profit >= 0 ? "pos" : "neg"));
+    grid.appendChild(statCell("Total profit", cash(total.profit), total.profit >= 0 ? "pos" : "neg"));
+    grid.appendChild(statCell("Total revenue (net)", cash(total.net)));
+    out.appendChild(grid);
+
+    if (t.scheduledWeeks) {
+      var note = document.createElement("p");
+      note.className = "fin-note";
+      note.textContent = "“Scheduled” uses today's Financials figures for " +
+        t.scheduledWeeks + " week" + (t.scheduledWeeks === 1 ? "" : "s") +
+        " not yet archived - an honest estimate, not locked in until each week " +
+        "actually happens.";
+      out.appendChild(note);
+    }
+  }
 
   /* ------------------------- custom filter ------------------------- *
    * David's own example: "Monday sessions hosted at the venue Freemen's"
@@ -2647,6 +2856,7 @@
 
   function renderFinView() {
     buildTree();
+    renderPeriodPanel();
     renderFilterPanel();
     selectNode(fv.node && (fv.node.coachView || fv.nodes[fv.node.key])
                  ? fv.node.key : "all");

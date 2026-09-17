@@ -73,6 +73,19 @@ window.APP_CONFIG = {
      breaks, the fact is simply absent. */
   themesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=1776896493&single=true&output=csv",
 
+  /* Published CSV URL for the "P&L archive" tab — the permanent weekly
+     record written by the "Weekly P&L archive.gs" Apps Script, one row
+     per session per week that has genuinely happened. Columns:
+     week_commencing, session_id, session_name, venue, client, category,
+     programme, participants, revenue_gross, revenue_net, coach_cost,
+     venue_cost, profit.
+     Read-only from here — the web app only ever sums what is already in
+     this tab for a picked date range ("Actual"); it never writes to it,
+     and never recalculates an already-archived week. Optional: without
+     it, the date-range panel on the Financials page has nothing to show
+     for the "Actual" side, but nothing else breaks. */
+  archiveCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj4giL7oEoZLLfC74Sq97bnUGIdMqnG_ECOkNyRis-Drz4yH1OUssQ-YBRbCR6ajiJBvV05JjzOi8I/pub?gid=899550120&single=true&output=csv",
+
   /* Published CSV URL for the "Terms" tab — which weeks each school's term
      actually runs. Columns: school, starts, ends, note.
      This is NOT for a one-off cancellation (that is Changes) — it is for a
