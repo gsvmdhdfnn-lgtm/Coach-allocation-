@@ -537,6 +537,22 @@ David: "I like that calendar link with the session."
    simply what David reads and acts on afterwards (add them to Coaches,
    run `addCoachCodes` to give them a real link).
 
+   **Where it ends up, and how it gets to a proper document or OneDrive -
+   David asked, worth having settled before this gets built.** The row
+   IS the copy - it lands directly on its own tab in the same Google
+   Sheet, nothing to separately "send." Turning that into a filed-away
+   document has two levels: manual (open the sheet, copy the row into a
+   Word doc - works from day one, no extra build) or automatic (the same
+   Apps Script that writes the row also generates a PDF and emails it,
+   one small addition to the same mechanism). **OneDrive specifically
+   cannot be written to directly from Apps Script** - different company,
+   no native bridge - so the realistic path is sheet -> emailed PDF ->
+   an Outlook rule (no code, a few minutes in Outlook's own settings)
+   that auto-saves attachments from that sender into a OneDrive folder.
+   Feels automatic end to end; is actually sheet -> email -> Outlook
+   rule -> OneDrive. A real Google-to-OneDrive sync is a separate,
+   bigger integration and not worth it just for this.
+
 ## Open questions
 
 Things I picked or guessed that are David's call:
