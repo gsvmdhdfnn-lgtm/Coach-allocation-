@@ -43,12 +43,34 @@ gets blended into the same screen as another one:
 | Tab | Answers | Contains |
 | --- | --- | --- |
 | **Baseline** | "What does this normally bring in?" | The Evening/Day/Combined head cards, typical monthly/weekly figures — as if every session ran every week or month exactly as scheduled |
-| **Actual** | "What's really happening, right now and over any range?" | The same three cards, but this real week only, term dates and cancellations applied — plus **Period totals** for any date range |
+| **Actual** | "What's really happening, right now and over any range?" | The same three cards, for **This week / This month / This term**, plus **Period totals** for any custom date range |
 | **Grouping** | "How does this break down?" | **Custom filter** (day/time/venue) and the programme tree (Evening/Day → category or school → session), both reading the Baseline figures sliced different ways |
 
 `Per month` / `Per week` (top of the page) affects Baseline and Grouping,
-where it means something — Actual is always "this real week," so the
-toggle has no effect there.
+where it means something — Actual is always some real, term-aware period
+(never a "typical" figure), so the toggle has no effect there. Actual has
+its own **This week / This month / This term** switch instead, right above
+its cards.
+
+**This week / This month / This term** — each card's figure is Actual
+(locked, from the P&L archive) plus Scheduled (a live projection for any
+part of the period not yet archived) combined into one headline, exactly
+the same Actual+Scheduled math Period totals already does, just for a
+quick preset range instead of a hand-picked one. A note underneath says
+how many weeks are locked in versus still projected, whenever the period
+isn't just this week (which is never archived yet, so that note would
+always fire and add nothing).
+
+**"This term" is a generic, calendar-based window - Autumn (1 Sep–31
+Dec), Spring (1 Jan–31 Mar), Summer (1 Apr–31 Aug) - the same for every
+school, every year, regardless of what any individual school's own Terms
+tab rows say.** Confirmed with David: real per-school term dates already
+vary (that's the whole point of the Terms tab) and are used everywhere
+else that needs them - gating cost, gating weekly revenue, the P&L
+archive. A single "termly" headline across Evening/Day/Combined needs one
+window to sum over, so it deliberately doesn't try to resolve whose real
+term that is. See `termBounds()`/`TERM_DEFS` in app.js if those calendar
+boundaries ever need adjusting.
 
 ## Turning on the two new sections
 

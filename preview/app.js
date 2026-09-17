@@ -1742,6 +1742,8 @@
     view:   document.getElementById("finview"),
     cards:  document.getElementById("head-cards"),
     actualCards: document.getElementById("actual-cards"),
+    actualNote:  document.getElementById("actual-note"),
+    actualBasisBtns: document.getElementById("actual-basis"),
     picks:  document.getElementById("fin-pickers"),
     detail: document.getElementById("fin-detail"),
     filterControls: document.getElementById("fin-filter-controls"),
@@ -1758,6 +1760,10 @@
     },
     tabBtns: document.getElementById("fin-tabs"),
     basis:  "monthly",
+    /* This week / This month / This term - the Actual tab's own basis,
+       independent of `basis` above (which is Baseline/Grouping's per
+       month/per week and has no meaning on Actual). */
+    actualBasis: "weekly",
     nodes:  {},
     node:   null,
     /* Independent of the programme tree above: a day, a venue and/or a
@@ -2082,19 +2088,108 @@
     fv.cards.appendChild(headCard("Combined", agg(state.sessions), true, overheads));
   }
 
+  var MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+
+  function monthBounds(d) {
+    var y = d.getFullYear(), m = d.getMonth();
+    return { from: new Date(y, m, 1), to: new Date(y, m + 1, 0) };
+  }
+
+  /* Generic, calendar-based terms - Autumn/Spring/Summer, the same window
+     for every school every year, regardless of what any individual school's
+     own Terms tab rows say. Confirmed with David: real per-school Terms
+     dates already vary and are used everywhere else in this app (gating
+     cost, gating weekly revenue, the P&L archive); a "termly" headline
+     figure needs ONE window to sum across Evening/Day/Combined at once, so
+     it deliberately does not try to resolve whose real term that is. */
+  var TERM_DEFS = [
+    { label: "Autumn", startMonth: 8,  endMonth: 11 },  // Sep - Dec
+    { label: "Spring", startMonth: 0,  endMonth: 2  },  // Jan - Mar
+    { label: "Summer", startMonth: 3,  endMonth: 7  }   // Apr - Aug
+  ];
+
+  function termBounds(d) {
+    var y = d.getFullYear(), m = d.getMonth();
+    var def = TERM_DEFS.filter(function (t) {
+      return m >= t.startMonth && m <= t.endMonth;
+    })[0];
+    return { label: def.label, from: new Date(y, def.startMonth, 1),
+             to: new Date(y, def.endMonth + 1, 0) };
+  }
+
+  /** The date range (and its caption) for the Actual tab's chosen basis. */
+  function actualRange(basis) {
+    var now = new Date();
+    if (basis === "monthly") {
+      var mb = monthBounds(now);
+      return { fromIso: isoDay(mb.from), toIso: isoDay(mb.to),
+        caption: "this month (" + MONTH_NAMES[now.getMonth()] + " " +
+          now.getFullYear() + "), actual to date" };
+    }
+    if (basis === "termly") {
+      var tb = termBounds(now);
+      return { fromIso: isoDay(tb.from), toIso: isoDay(tb.to),
+        caption: "this term (" + tb.label + ", " + shortDate(tb.from) +
+          "–" + shortDate(tb.to) + "), actual to date" };
+    }
+    var wk = mondayOf(now);
+    return { fromIso: isoDay(wk), toIso: isoDay(wk),
+      caption: "this week (w/c " + shortDate(wk) + "), actual" };
+  }
+
   /**
-   * The Actual tab's equivalent of headCard() - one figure only, THIS real
-   * week, term dates and cancellations already applied. Deliberately never
-   * shows the typical monthly/weekly figure alongside it (that is the
-   * Baseline tab's job) so the two questions can never be misread as one
-   * number.
+   * Overheads for an arbitrary range, not just this week/month - a regular
+   * cost converted to weekly and multiplied by however many calendar weeks
+   * the range actually spans; a one-off counted if its date falls inside
+   * the range. Generalises overheadTotals() the same way periodTotals()
+   * generalises weekEstimate().
    */
-  function actualCard(title, a, isTotal, overheads, weekOf) {
+  function overheadsForRange(fromIso, toIso) {
+    var out = { total: 0, oneOffs: [] };
+    if (!state.overheads || !state.overheads.length) return out;
+    var weeks = mondaysBetween(fromIso, toIso).length;
+    state.overheads.forEach(function (r) {
+      if (!r.repeats) {
+        if (!r.starts) return;
+        var s = isoDay(r.starts);
+        if (s >= fromIso && s <= toIso) { out.total += r.amount; out.oneOffs.push(r); }
+        return;
+      }
+      var toWeekly = { weekly: 1, monthly: 1 / WEEKS, quarterly: 1 / 13,
+                       annually: 1 / 52 }[r.repeats];
+      if (toWeekly == null) return;   // an unrecognised word in `repeats` - skip, don't guess
+      out.total += r.amount * toWeekly * weeks;
+    });
+    return out;
+  }
+
+  /**
+   * The Actual tab's equivalent of headCard() - term dates and
+   * cancellations already applied, for whichever range (this week/month/
+   * term) is currently selected. Deliberately never shows the typical
+   * monthly/weekly figure alongside it (that is the Baseline tab's job) so
+   * the two questions can never be misread as one number. Actual (locked,
+   * archived) and Scheduled (live projection) are combined into one
+   * headline here - the Period totals panel below is where that split is
+   * shown explicitly, for any range.
+   */
+  function actualCard(title, list, isTotal, range) {
     var c = document.createElement("div");
     c.className = "hcard" + (isTotal ? " is-total" : "");
     var h = document.createElement("h3"); h.textContent = title; c.appendChild(h);
 
-    var headline = overheads ? a.thisWeek.profit - overheads.weekly : a.thisWeek.profit;
+    var t = periodTotals(range.fromIso, range.toIso, list);
+    var combined = {
+      net:    t.actual.net    + t.scheduled.net,
+      coach:  t.actual.coach  + t.scheduled.coach,
+      venue:  t.actual.venue  + t.scheduled.venue,
+      profit: t.actual.profit + t.scheduled.profit
+    };
+
+    var overheads = isTotal ? overheadsForRange(range.fromIso, range.toIso) : null;
+    var headline = overheads ? combined.profit - overheads.total : combined.profit;
+
     var big = document.createElement("div");
     big.className = "big " + (headline >= 0 ? "pos" : "neg");
     big.textContent = cash(headline);
@@ -2102,17 +2197,16 @@
 
     var caption = document.createElement("div");
     caption.className = "alt hcard-caption";
-    caption.textContent = "this week (w/c " + weekOf + "), actual" +
-      (overheads ? " — after overheads" : "");
+    caption.textContent = range.caption + (overheads ? " — after overheads" : "");
     c.appendChild(caption);
 
     var rows = document.createElement("div");
     rows.className = "rows";
-    var lines = [["Revenue (net)", a.thisWeek.net], ["Coach cost", a.thisWeek.coach],
-                 ["Venue cost", a.thisWeek.venue]];
+    var lines = [["Revenue (net)", combined.net], ["Coach cost", combined.coach],
+                 ["Venue cost", combined.venue]];
     if (overheads) {
-      lines.push(["Session profit", a.thisWeek.profit]);
-      lines.push(["Overheads", -overheads.weekly]);
+      lines.push(["Session profit", combined.profit]);
+      lines.push(["Overheads", -overheads.total]);
     }
     lines.forEach(function (r) {
       var d = document.createElement("div");
@@ -2127,13 +2221,30 @@
 
   function renderActualCards() {
     fv.actualCards.innerHTML = "";
-    var weekOf = shortDate(mondayOf(new Date()));
+    var range = actualRange(fv.actualBasis);
     var ev = state.sessions.filter(function (s) { return !isDay(s); });
     var dy = state.sessions.filter(isDay);
-    fv.actualCards.appendChild(actualCard("Evening programme", agg(ev), false, null, weekOf));
-    fv.actualCards.appendChild(actualCard("Day programme", agg(dy), false, null, weekOf));
-    var overheads = state.overheads && state.overheads.length ? overheadTotals() : null;
-    fv.actualCards.appendChild(actualCard("Combined", agg(state.sessions), true, overheads, weekOf));
+    fv.actualCards.appendChild(actualCard("Evening programme", ev, false, range));
+    fv.actualCards.appendChild(actualCard("Day programme", dy, false, range));
+    fv.actualCards.appendChild(actualCard("Combined", state.sessions, true, range));
+
+    fv.actualNote.innerHTML = "";
+    if (fv.actualBasis !== "weekly") {
+      var weeksInfo = periodTotals(range.fromIso, range.toIso);
+      if (weeksInfo.scheduledWeeks) {
+        var note = document.createElement("p");
+        note.className = "fin-note";
+        note.textContent = weeksInfo.actualWeeks
+          ? weeksInfo.actualWeeks + " week" + (weeksInfo.actualWeeks === 1 ? "" : "s") +
+            " of this locked in from the archive, " + weeksInfo.scheduledWeeks +
+            " week" + (weeksInfo.scheduledWeeks === 1 ? "" : "s") +
+            " still a projection from today's figures — it'll firm up as each week finishes."
+          : "Nothing locked in yet for this period — every week shown is still a " +
+            "projection from today's figures, since none of it has finished and " +
+            "been archived.";
+        fv.actualNote.appendChild(note);
+      }
+    }
   }
 
   function renderLevel(node) {
@@ -2280,7 +2391,12 @@
     return out;
   }
 
-  function periodTotals(fromIso, toIso) {
+  /**
+   * @param {Array} [sessionFilter] - restrict to just these sessions (e.g.
+   *   Evening programme only). Omit for every session, as the Period
+   *   totals panel does.
+   */
+  function periodTotals(fromIso, toIso, sessionFilter) {
     var out = {
       actual:    { gross:0, net:0, coach:0, venue:0, profit:0 },
       scheduled: { gross:0, net:0, coach:0, venue:0, profit:0 },
@@ -2291,9 +2407,17 @@
     var todayMonday = isoDay(mondayOf(new Date()));
     if (fromMonday > toMonday) return out;
 
+    var list = sessionFilter || state.sessions;
+    var idSet = null;
+    if (sessionFilter) {
+      idSet = {};
+      sessionFilter.forEach(function (s) { idSet[s.id] = true; });
+    }
+
     var archivedWeeks = {};
     (state.archive || []).forEach(function (r) {
       if (r.week < fromMonday || r.week > toMonday || r.week >= todayMonday) return;
+      if (idSet && !idSet[r.sessionId]) return;
       archivedWeeks[r.week] = true;
       out.actual.gross += r.gross; out.actual.net += r.net;
       out.actual.coach += r.coach; out.actual.venue += r.venue;
@@ -2304,7 +2428,7 @@
     var scheduledFrom = fromMonday > todayMonday ? fromMonday : todayMonday;
     if (scheduledFrom <= toMonday) {
       mondaysBetween(scheduledFrom, toMonday).forEach(function (iso) {
-        var w = weekEstimate(state.sessions, iso);
+        var w = weekEstimate(list, iso);
         out.scheduled.gross += w.gross; out.scheduled.net += w.net;
         out.scheduled.coach += w.coach; out.scheduled.venue += w.venue;
         out.scheduledWeeks++;
@@ -2943,10 +3067,13 @@
     showFinTab(fv.tab);
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (b) {
+  /* Scoped to [data-basis] specifically - .seg-btn alone also matches the
+     Actual tab's This week/month/term buttons, which carry data-actualbasis
+     instead and must not be swept up here. */
+  Array.prototype.forEach.call(document.querySelectorAll(".seg-btn[data-basis]"), function (b) {
     b.addEventListener("click", function () {
       fv.basis = b.getAttribute("data-basis");
-      Array.prototype.forEach.call(document.querySelectorAll(".seg-btn"), function (o) {
+      Array.prototype.forEach.call(document.querySelectorAll(".seg-btn[data-basis]"), function (o) {
         o.classList.toggle("is-on", o === b);
       });
       // Basis (per month/per week) only affects Baseline and Grouping - a
@@ -2959,6 +3086,18 @@
   if (fv.tabBtns) {
     Array.prototype.forEach.call(fv.tabBtns.querySelectorAll("[data-fintab]"), function (b) {
       b.addEventListener("click", function () { showFinTab(b.getAttribute("data-fintab")); });
+    });
+  }
+
+  if (fv.actualBasisBtns) {
+    Array.prototype.forEach.call(fv.actualBasisBtns.querySelectorAll("[data-actualbasis]"), function (b) {
+      b.addEventListener("click", function () {
+        fv.actualBasis = b.getAttribute("data-actualbasis");
+        Array.prototype.forEach.call(fv.actualBasisBtns.querySelectorAll("[data-actualbasis]"), function (o) {
+          o.classList.toggle("is-on", o === b);
+        });
+        renderActualCards();
+      });
     });
   }
 

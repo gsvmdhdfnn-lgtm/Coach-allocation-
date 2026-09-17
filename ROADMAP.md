@@ -123,6 +123,32 @@ real codes (via `addCoachCodes` in `Add hub tabs.gs`) is next.
     show the week-commencing caption, that Period totals and the tree
     drill-down still work inside their new tabs, and that the basis
     toggle still works.
+- **Actual tab: added This week / This month / This term** alongside the
+  existing per-card figure. David asked for it directly ("weekly, monthly
+  and termly"). Each card now shows Actual (locked, from the archive) +
+  Scheduled (live projection) combined for whichever period is picked,
+  reusing `periodTotals()` generalised to take an optional session-list
+  filter (so Evening/Day/Combined can each sum just their own sessions).
+  Added `overheadsForRange()` (converts a regular overhead to weekly and
+  multiplies by however many weeks the range spans; a one-off counts if
+  its date falls inside the range) so the Combined card's "after
+  overheads" figure works for any period, not just a week.
+  - **"This term" is asked-and-answered as a decision, not a guess**:
+    checked with David how to define a term boundary given schools can
+    have different Terms-tab dates — chose a generic, calendar-based
+    Autumn (1 Sep–31 Dec) / Spring (1 Jan–31 Mar) / Summer (1 Apr–31 Aug)
+    window, same for everyone every year, rather than trying to resolve
+    whose real per-school term is "the" term for a combined headline.
+  - Caught and fixed a real bug during testing, not a fixture issue: the
+    new buttons shared the `.seg-btn` CSS class with the existing Per
+    month/Per week toggle, and that toggle's click handler queried
+    `.seg-btn` globally — clicking This month/This term was blanking out
+    `fv.basis` and crashing the Baseline tab. Fixed by scoping that
+    handler to `.seg-btn[data-basis]`.
+  - Tested with a 16-assertion fixture: weekly/monthly/termly captions and
+    figures, the locked-vs-projected note appearing/clearing correctly
+    and never stacking on repeated switching, and the choice persisting
+    across Financials tab switches.
 
 ## Next — tomorrow, at the laptop
 
