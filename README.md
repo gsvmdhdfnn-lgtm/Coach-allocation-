@@ -1,26 +1,11 @@
-# Josh Evans Hub — Frontend Rebuild v1
+# Josh Evans Hub — Frontend Rebuild v2
 
-This is a from-scratch frontend rebuild designed to match the approved mobile mockups more closely.
+Visual refinement pass on the from-scratch rebuild.
 
-## Important
-- Google Sheets are NOT changed.
-- `config.js` is copied from the existing live project and remains the data source configuration.
-- `je-logo.png` is the existing real Josh Evans Soccer School logo asset.
-- The existing live branch/site is not modified by this ZIP.
+- Existing Google Sheets remain untouched.
+- Existing `config.js` is preserved.
+- Uses the real existing `je-logo.png` asset.
+- UI is mobile-first and designed to match the approved mockup direction more closely.
+- This is intended for a test branch only.
 
-## Preview
-Open `index.html?demo=1` to preview the complete UI with safe demo data.
-Open `index.html` after upload to a test branch to use the existing Google Sheet CSV connections.
-
-## Screens included
-- Coach Home
-- Schedule
-- Session Details
-- Venues
-- Resources
-- Coach Support Centre
-- More
-- Management / Financials lock + dashboard shell
-
-## Calendar
-The Session Details screen generates an `.ics` calendar file. This is the safest cross-platform web approach for Add to Calendar without requiring Google/Apple account permissions.
+For local visual review, append `?demo=1` to `index.html`.
