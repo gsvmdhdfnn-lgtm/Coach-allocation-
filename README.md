@@ -1,13 +1,16 @@
-# Josh Evans Hub — Coach Schedule v1.2
+# Josh Evans Hub — Session Details v1
 
-Schedule refinement on top of the approved Coach Home.
+Focused Session Details build on top of Coach Schedule v1.2.
 
-## Changes in v1.2
-- Session theme is displayed directly on schedule cards, including the compact This Week view.
-- Themes continue to come from the existing Google Sheet `Themes` tab by week + category.
-- Extra sessions now show a clear `EXTRA SESSION` heading on the card.
-- Cover and cancelled sessions use the same small heading treatment for consistency.
-- Extra sessions try their own category first; if no category is supplied, the Hub can fall back to a matching normal session to find the appropriate weekly theme.
-- Existing AM/PM, Back button and academic-year Calendar behaviour are preserved.
+## Session Details
+- Clear Back button retained at the top.
+- Date and explicit `Start → Finish` time shown in consistent AM/PM format.
+- Venue, address and postcode are shown directly on the page when available.
+- Venue information is read from the existing `Venue info` Google Sheet tab, with the Session address as fallback.
+- Shows the other coach(es) working that session; solo sessions are clearly identified.
+- Weekly session theme continues to come from the existing `Themes` tab.
+- Extra / Cover / Cancelled status is shown clearly when applicable.
+- Notes are shown from a matching `Changes` row or an extra-session note; otherwise a quiet "No additional notes" message is shown.
+- Add to Calendar and Venue Details actions are included.
+- Session resource links are intentionally not included yet.
 - Google Sheets remain read-only.
-- Existing `config.js` and real `je-logo.png` are preserved.
