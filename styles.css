@@ -91,3 +91,17 @@ button,input{font:inherit}button{cursor:pointer}
 .session-detail-simple ul{list-style:none;margin:0;padding:0;display:grid}.session-detail-simple li{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #edf1f5;font-size:10px}.session-detail-simple li:last-child{border:0}.session-detail-simple li b{color:var(--navy)}.session-detail-simple li span{color:#687a91;line-height:1.35}
 .calendar-sheet h3{margin:0;color:var(--navy);font-size:17px}.calendar-sheet>p{margin:5px 0 14px;color:var(--muted);font-size:11px}.calendar-sheet>button{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;border:0;border-top:1px solid var(--line);background:#fff;text-align:left;padding:13px 3px;color:var(--ink)}.calendar-sheet>button b{display:block;font-size:12px}.calendar-sheet>button small{display:block;margin-top:3px;color:var(--muted);font-size:9px}
 @media(min-width:760px){.coach-schedule{padding-bottom:48px}.schedule-session{grid-template-columns:4px 64px minmax(0,1fr) 18px}.calendar-card{padding:18px}}
+
+/* v1.1 navigation/time/calendar refinements */
+.app-back{font-size:30px;line-height:1;padding-bottom:4px}
+.topbar-spacer{width:40px;height:40px;display:block}
+.app-back:not([hidden]) + .topbar-spacer{display:none}
+.schedule-time{min-width:112px}
+.schedule-time b{font-size:10px;line-height:1.25;white-space:normal}
+.today-time{font-size:10px;line-height:1.28}
+.calendar-year-note{text-align:center;color:var(--muted);font-size:9px;font-weight:700;margin:-3px 0 10px}
+@media(max-width:520px){
+  .schedule-session{grid-template-columns:4px 108px minmax(0,1fr) auto}
+  .schedule-session.compact{grid-template-columns:4px 108px minmax(0,1fr) auto}
+  .today-home-row{grid-template-columns:4px 112px minmax(0,1fr) auto}
+}
