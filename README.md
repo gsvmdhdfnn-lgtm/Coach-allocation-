@@ -1,11 +1,11 @@
-# Josh Evans Hub — Frontend Rebuild v2
+# Josh Evans Hub — Coach Home v1
 
-Visual refinement pass on the from-scratch rebuild.
+Focused rebuild of the Coach Home screen to match the approved reference.
 
-- Existing Google Sheets remain untouched.
+- Next Session is calculated from the real current date/time.
+- Countdown updates automatically.
+- Today's Sessions only shows sessions valid for today.
+- Calendar running weeks, Terms and Changes/cancellations/covers are respected for the home-screen selection logic.
+- Google Sheets are not modified.
 - Existing `config.js` is preserved.
 - Uses the real existing `je-logo.png` asset.
-- UI is mobile-first and designed to match the approved mockup direction more closely.
-- This is intended for a test branch only.
-
-For local visual review, append `?demo=1` to `index.html`.
